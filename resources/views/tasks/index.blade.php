@@ -1,144 +1,241 @@
 @extends('layouts.app')
 
+@section('title', 'My Tasks')
+
 @section('content')
-    <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">📝 My To-Do List</h1>
-        <p class="text-gray-600">Kelola tugas Anda dengan mudah</p>
+<div class="max-w-7xl mx-auto">
+    {{-- Header dengan stats --}}
+    <div class="mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {{-- Stat Cards --}}
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg mr-4">
+                        <i class="fas fa-tasks text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Tasks</p>
+                        <p class="text-2xl font-bold">{{ $tasks->total() }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg mr-4">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Completed</p>
+                        <p class="text-2xl font-bold">{{ $completedTasks }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg mr-4">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Pending</p>
+                        <p class="text-2xl font-bold">{{ $tasks->total() - $completedTasks }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Actions Bar --}}
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-xl shadow">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4 md:mb-0">
+                <i class="fas fa-list-check mr-2 text-indigo-600"></i>My Tasks
+            </h1>
+
+            <div class="flex space-x-3">
+                <a href="{{ route('tasks.create') }}"
+                   class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
+                    <i class="fas fa-plus mr-2"></i>Create New Task
+                </a>
+
+                {{-- Filter Dropdown --}}
+                <div class="relative">
+                    <button onclick="toggleFilter()"
+                            class="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition duration-200">
+                        <i class="fas fa-filter mr-2"></i>Filter
+                        <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                    </button>
+
+                    <div id="filterDropdown"
+                         class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-10 border border-gray-200">
+                        <a href="{{ route('tasks.index') }}"
+                           class="block px-4 py-3 hover:bg-gray-50 {{ !request()->is('tasks/filter/*') ? 'bg-indigo-50 text-indigo-600' : '' }}">
+                            <i class="fas fa-layer-group mr-2"></i>All Tasks
+                        </a>
+                        <a href="{{ route('tasks.filter', 'completed') }}"
+                           class="block px-4 py-3 hover:bg-gray-50 {{ request()->is('tasks/filter/completed') ? 'bg-green-50 text-green-600' : '' }}">
+                            <i class="fas fa-check-circle mr-2"></i>Completed
+                        </a>
+                        <a href="{{ route('tasks.filter', 'pending') }}"
+                           class="block px-4 py-3 hover:bg-gray-50 {{ request()->is('tasks/filter/pending') ? 'bg-yellow-50 text-yellow-600' : '' }}">
+                            <i class="fas fa-clock mr-2"></i>Pending
+                        </a>
+                        <a href="{{ route('tasks.filter', 'high') }}"
+                           class="block px-4 py-3 hover:bg-gray-50 {{ request()->is('tasks/filter/high') ? 'bg-red-50 text-red-600' : '' }}">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>High Priority
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Success Message -->
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg shadow-md">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    <!-- Daftar Task -->
-    <div class="space-y-4">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">📋 Daftar Task</h2>
-
-        @forelse($tasks as $task)
-            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition duration-300 {{ $task->is_completed ? 'opacity-75' : '' }}">
-                <div class="flex items-start justify-between">
+    {{-- Tasks List --}}
+    @if($tasks->isEmpty())
+    <div class="text-center py-16 bg-white rounded-xl shadow">
+        <i class="fas fa-clipboard-list text-gray-300 text-6xl mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">No tasks found</h3>
+        <p class="text-gray-500 mb-6">Get started by creating your first task!</p>
+        <a href="{{ route('tasks.create') }}"
+           class="inline-flex items-center bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-200">
+            <i class="fas fa-plus mr-2"></i>Create Your First Task
+        </a>
+    </div>
+    @else
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        @foreach($tasks as $task)
+        <div class="task-card bg-white rounded-xl shadow hover:shadow-xl transition-all duration-300 overflow-hidden
+                    {{ $task->completed ? 'task-completed' : '' }} {{ 'priority-' . $task->priority }}">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
                     <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                            <!-- Toggle Complete -->
-                            <form action="{{ route('tasks.toggle', $task) }}" method="POST">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="text-2xl hover:scale-110 transition">
-                                    {{ $task->is_completed ? '✅' : '⬜' }}
-                                </button>
-                            </form>
-
-                            <h3 class="text-xl font-semibold {{ $task->is_completed ? 'line-through text-gray-500' : 'text-gray-800' }}">
-                                {{ $task->title }}
-                            </h3>
-
-                            <!-- Priority Badge -->
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                {{ $task->priority === 'high' ? 'bg-red-200 text-red-800' : '' }}
-                                {{ $task->priority === 'medium' ? 'bg-yellow-200 text-yellow-800' : '' }}
-                                {{ $task->priority === 'low' ? 'bg-green-200 text-green-800' : '' }}">
-                                {{ $task->priority === 'high' ? '🔴 Tinggi' : '' }}
-                                {{ $task->priority === 'medium' ? '🟡 Sedang' : '' }}
-                                {{ $task->priority === 'low' ? '🟢 Rendah' : '' }}
+                        <div class="flex items-center mb-2">
+                            {{-- Priority Badge --}}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mr-3
+                                {{ $task->priority == 'high' ? 'bg-red-100 text-red-800' :
+                                   ($task->priority == 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                   'bg-green-100 text-green-800') }}">
+                                <i class="fas fa-flag mr-1"></i>
+                                {{ ucfirst($task->priority) }}
                             </span>
+
+                            {{-- Status Badge --}}
+                            @if($task->completed)
+                            <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                <i class="fas fa-check mr-1"></i> Completed
+                            </span>
+                            @elseif($task->due_date && $task->due_date->isPast())
+                            <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Overdue
+                            </span>
+                            @endif
                         </div>
 
-                        @if($task->description)
-                            <p class="text-gray-600 mb-2 ml-11">{{ $task->description }}</p>
-                        @endif
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2 {{ $task->completed ? 'line-through text-gray-500' : '' }}">
+                            {{ $task->title }}
+                        </h3>
 
-                        @if($task->due_date)
-                            <p class="text-sm text-gray-500 ml-11">
-                                📅 Deadline: {{ $task->due_date->format('d M Y') }}
-                            </p>
+                        @if($task->description)
+                        <p class="text-gray-600 mb-4 line-clamp-2">
+                            {{ Str::limit($task->description, 150) }}
+                        </p>
                         @endif
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex gap-2">
-                        <button onclick="openEditModal({{ $task->id }}, '{{ addslashes($task->title) }}', '{{ addslashes($task->description ?? '') }}', '{{ $task->due_date?->format('Y-m-d') }}', '{{ $task->priority }}')"
-                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                            ✏️ Edit
-                        </button>
-                        <form action="{{ route('tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus task ini?')">
+                    {{-- Task Actions --}}
+                    <div class="flex space-x-2 ml-4">
+                        {{-- Toggle Complete --}}
+                        <form action="{{ route('tasks.toggle', $task->id) }}" method="POST" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit"
+                                    class="p-2 rounded-full {{ $task->completed ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}
+                                           transition duration-200"
+                                    title="{{ $task->completed ? 'Mark as Pending' : 'Mark as Complete' }}">
+                                <i class="fas {{ $task->completed ? 'fa-rotate-left' : 'fa-check' }}"></i>
+                            </button>
+                        </form>
+
+                        {{-- Edit --}}
+                        <a href="{{ route('tasks.edit', $task->id) }}"
+                           class="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition duration-200"
+                           title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+
+                        {{-- Delete --}}
+                        <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" class="inline delete-form">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
-                                🗑️ Hapus
+                            <button type="submit"
+                                    class="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition duration-200"
+                                    title="Delete"
+                                    onclick="return confirm('Delete this task?')">
+                                <i class="fas fa-trash"></i>
                             </button>
                         </form>
                     </div>
                 </div>
-            </div>
-        @empty
-            <div class="bg-white rounded-xl shadow-lg p-12 text-center">
-                <p class="text-gray-500 text-lg">Belum ada task. Tambahkan task pertama Anda! 🚀</p>
-            </div>
-        @endforelse
-    </div>
 
-    <!-- Floating Add Button -->
-    <button onclick="toggleDrawer()" aria-label="Tambah task" class="fixed right-6 bottom-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-full shadow-lg hover:scale-105 transition z-40">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-    </button>
+                {{-- Task Meta --}}
+                <div class="flex flex-wrap items-center justify-between pt-4 border-t border-gray-100">
+                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                        @if($task->due_date)
+                        <div class="flex items-center">
+                            <i class="far fa-calendar-alt mr-2"></i>
+                            <span class="{{ $task->due_date->isPast() && !$task->completed ? 'text-red-600 font-semibold' : '' }}">
+                                Due: {{ $task->due_date->format('M d, Y') }}
+                            </span>
+                        </div>
+                        @endif
 
-    <!-- Modal Edit -->
-    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
-        <div class="flex items-center justify-center h-full">
-            <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-            <h3 class="text-2xl font-semibold mb-4">Edit Task</h3>
-            <form id="editForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Judul Task</label>
-                    <input type="text" name="title" id="editTitle" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <div class="flex items-center">
+                            <i class="far fa-clock mr-2"></i>
+                            <span>Created: {{ $task->created_at->diffForHumans() }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Quick Actions --}}
+                    <div class="flex space-x-2">
+                        @if(!$task->completed)
+                        <form action="{{ route('tasks.toggle', $task->id) }}" method="POST" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit"
+                                    class="text-sm bg-green-50 text-green-700 hover:bg-green-100 px-3 py-1.5 rounded-lg transition duration-200">
+                                <i class="fas fa-check mr-1"></i>Mark Complete
+                            </button>
+                        </form>
+                        @endif
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Deskripsi</label>
-                    <textarea name="description" id="editDescription" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Tanggal Deadline</label>
-                    <input type="date" name="due_date" id="editDueDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Prioritas</label>
-                    <select name="priority" id="editPriority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        <option value="low">🟢 Rendah</option>
-                        <option value="medium">🟡 Sedang</option>
-                        <option value="high">🔴 Tinggi</option>
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition">
-                        Update
-                    </button>
-                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-400 transition">
-                        Batal
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
+        @endforeach
     </div>
 
-    <script>
-        function openEditModal(id, title, description, dueDate, priority) {
-            document.getElementById('editForm').action = `/tasks/${id}`;
-            document.getElementById('editTitle').value = title;
-            document.getElementById('editDescription').value = description || '';
-            document.getElementById('editDueDate').value = dueDate || '';
-            document.getElementById('editPriority').value = priority;
-            document.getElementById('editModal').classList.remove('hidden');
-        }
+    {{-- Pagination --}}
+    @if($tasks->hasPages())
+    <div class="mt-8">
+        {{ $tasks->links() }}
+    </div>
+    @endif
+    @endif
+</div>
 
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-        }
-    </script>
+<script>
+function toggleFilter() {
+    const dropdown = document.getElementById('filterDropdown');
+    dropdown.classList.toggle('hidden');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('filterDropdown');
+    const button = document.querySelector('[onclick="toggleFilter()"]');
+
+    if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+</script>
 @endsection

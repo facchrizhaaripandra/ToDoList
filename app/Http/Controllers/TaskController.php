@@ -9,15 +9,10 @@ class TaskController extends Controller
 {
     public function index()
     {
-        $tasks = Task::orderBy('is_completed', 'asc')
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+        $tasks = Task::latest()->paginate(10);
+        $completedTasks = Task::where('completed', true)->count();
 
-        $completedCount = Task::where('is_completed', true)->count();
-        $pendingCount = Task::where('is_completed', false)->count();
-        $totalCount = Task::count();
-
-        return view('tasks.index', compact('tasks', 'completedCount', 'pendingCount', 'totalCount'));
+        return view('tasks.index', compact('tasks', 'completedTasks'));
     }
 
     public function create()
@@ -28,40 +23,86 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'nullable',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'due_date' => 'nullable|date',
-            'priority' => 'required|in:low,medium,high'
+            'priority' => 'nullable|in:low,medium,high',
+            'completed' => 'boolean'
         ]);
 
         Task::create($validated);
 
-        return redirect()->route('tasks.index')->with('success', 'Task berhasil ditambahkan! 🎉');
+        return redirect()->route('tasks.index')
+            ->with('success', 'Task created successfully!');
+    }
+
+    public function show(Task $task)
+    {
+        return view('tasks.show', compact('task'));
+    }
+
+    public function edit(Task $task)
+    {
+        return view('tasks.edit', compact('task'));
     }
 
     public function update(Request $request, Task $task)
     {
         $validated = $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'nullable',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'due_date' => 'nullable|date',
-            'priority' => 'required|in:low,medium,high'
+            'priority' => 'nullable|in:low,medium,high',
+            'completed' => 'boolean'
         ]);
 
         $task->update($validated);
 
-        return redirect()->route('tasks.index')->with('success', 'Task berhasil diupdate! ✨');
-    }
-
-    public function toggleComplete(Task $task)
-    {
-        $task->update(['is_completed' => !$task->is_completed]);
-        return redirect()->route('tasks.index');
+        return redirect()->route('tasks.index')
+            ->with('success', 'Task updated successfully!');
     }
 
     public function destroy(Task $task)
     {
         $task->delete();
-        return redirect()->route('tasks.index')->with('success', 'Task berhasil dihapus! 🗑️');
+
+        return redirect()->route('tasks.index')
+            ->with('success', 'Task deleted successfully!');
+    }
+
+    public function toggle(Task $task)
+    {
+        $task->update([
+            'completed' => !$task->completed
+        ]);
+
+        return redirect()->route('tasks.index')
+            ->with('success', 'Task status updated!');
+    }
+
+    public function filter($filter)
+    {
+        $query = Task::query();
+
+        switch ($filter) {
+            case 'completed':
+                $query->where('completed', true);
+                break;
+            case 'pending':
+                $query->where('completed', false);
+                break;
+            case 'high':
+                $query->where('priority', 'high');
+                break;
+            case 'overdue':
+                $query->where('due_date', '<', now())
+                      ->where('completed', false);
+                break;
+        }
+
+        $tasks = $query->latest()->paginate(10);
+        $completedTasks = Task::where('completed', true)->count();
+
+        return view('tasks.index', compact('tasks', 'completedTasks'));
     }
 }

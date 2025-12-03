@@ -3,9 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TaskController;
 
-Route::get('/', [TaskController::class, 'index'])->name('tasks.index');
-Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
-Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
-Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
-Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggleComplete'])->name('tasks.toggle');
-Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+Route::get('/', function () {
+    return redirect()->route('tasks.index');
+});
+
+// Resource routes dengan semua metode
+Route::resource('tasks', TaskController::class);
+
+// Route tambahan untuk toggle complete
+Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggle'])
+    ->name('tasks.toggle');
+
+// Route untuk filter
+Route::get('/tasks/filter/{filter}', [TaskController::class, 'filter'])
+    ->name('tasks.filter');

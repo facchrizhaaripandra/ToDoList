@@ -1,7 +1,31 @@
-export default {
-    content: ["./resources/**/*.blade.php", "./resources/**/*.js"],
+// tailwind.config.js
+module.exports = {
+    content: [
+        "./resources/**/*.blade.php",
+        "./resources/**/*.js",
+        "./resources/**/*.vue",
+    ],
     theme: {
-        extend: {},
+        extend: {
+            colors: {
+                primary: "#6366f1",
+                secondary: "#8b5cf6",
+            },
+            animation: {
+                "fade-in": "fadeIn 0.5s ease-in-out",
+                "slide-up": "slideUp 0.3s ease-out",
+            },
+            keyframes: {
+                fadeIn: {
+                    "0%": { opacity: "0" },
+                    "100%": { opacity: "1" },
+                },
+                slideUp: {
+                    "0%": { transform: "translateY(10px)", opacity: "0" },
+                    "100%": { transform: "translateY(0)", opacity: "1" },
+                },
+            },
+        },
     },
     plugins: [],
 };
