@@ -4,13 +4,31 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Task;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class TaskSeeder extends Seeder
 {
     public function run()
     {
-        // Clear existing tasks
-        Task::truncate();
+        // Clear existing data safely (disable foreign key checks during truncation)
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        // Truncate dependent tables first (checklist_items, then subtasks)
+        if (Schema::hasTable('checklist_items')) {
+            DB::table('checklist_items')->truncate();
+        }
+        if (Schema::hasTable('subtasks')) {
+            DB::table('subtasks')->truncate();
+        }
+
+        // Then truncate tasks
+        if (Schema::hasTable('tasks')) {
+            Task::truncate();
+        }
+
+        // Re-enable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $tasks = [
             [
