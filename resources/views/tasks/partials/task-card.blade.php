@@ -1,13 +1,20 @@
-<div class="task-card" data-task-id="{{ $task->id }}">
-    <div class="task-checkbox">
+<div class="task-card" data-task-id="{{ $task->id }}" onclick="showTaskDetail({{ $task->id }})">
+    <div class="task-checkbox" onclick="event.stopPropagation();">
         <input type="checkbox" class="task-complete-checkbox"
                data-task-id="{{ $task->id }}"
-               {{ $task->status == 'Done' ? 'checked' : '' }}>
+               {{ $task->status == 'Done' ? 'checked' : '' }}
+               onclick="event.stopPropagation();">
     </div>
 
     <h6 class="task-title">{{ $task->title }}</h6>
 
-    <p class="task-description">{{ $task->description }}</p>
+    <p class="task-description">
+        @if($task->description)
+            {{ Str::limit($task->description, 100) }}
+        @else
+            <span class="text-muted">No description</span>
+        @endif
+    </p>
 
     <div class="task-tags">
         @if($task->category)

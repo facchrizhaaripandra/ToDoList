@@ -7,7 +7,8 @@ use App\Http\Controllers\TaskController;
 Route::get('/board', [TaskController::class, 'board'])->name('tasks.board');
 Route::post('/tasks/{task}/update-status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
 
-// Resource Routes for CRUD
+// Task CRUD Routes
+Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show'); // Untuk detail task
 Route::resource('tasks', TaskController::class)->except(['show']);
 
 // Home page redirect to board

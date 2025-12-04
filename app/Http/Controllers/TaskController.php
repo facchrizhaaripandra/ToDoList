@@ -17,6 +17,32 @@ class TaskController extends Controller
         return view('tasks.board', compact('tasks', 'todoCount', 'inProgressCount', 'doneCount'));
     }
 
+    public function show($id)
+    {
+        try {
+            $task = Task::findOrFail($id);
+
+            return response()->json([
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'category' => $task->category,
+                'priority' => $task->priority,
+                'due_date' => $task->due_date,
+                'subtasks_total' => $task->subtasks_total,
+                'subtasks_completed' => $task->subtasks_completed,
+                'created_at' => $task->created_at ? $task->created_at->toDateTimeString() : null,
+                'updated_at' => $task->updated_at ? $task->updated_at->toDateTimeString() : null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Task not found',
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
     public function updateStatus(Request $request, $id)
     {
         try {
@@ -75,11 +101,6 @@ class TaskController extends Controller
     }
 
     public function create()
-    {
-        return redirect()->route('tasks.board');
-    }
-
-    public function show($id)
     {
         return redirect()->route('tasks.board');
     }

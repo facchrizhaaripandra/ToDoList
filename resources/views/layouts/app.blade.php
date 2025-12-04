@@ -158,11 +158,13 @@
             margin: 0 15px 15px 15px;
             transition: all 0.3s;
             position: relative;
+            cursor: pointer;
         }
 
         .task-card:hover {
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             transform: translateY(-2px);
+            border-color: #3498db;
         }
 
         .task-checkbox {
