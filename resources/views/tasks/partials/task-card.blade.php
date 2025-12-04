@@ -11,7 +11,24 @@
 
     <div class="task-tags">
         @if($task->category)
-            <span class="task-tag tag-{{ strtolower($task->category) }}">
+            @php
+                $categoryClass = '';
+                switch(strtolower($task->category)) {
+                    case 'design':
+                        $categoryClass = 'tag-design';
+                        break;
+                    case 'development':
+                        $categoryClass = 'tag-development';
+                        break;
+                    case 'research':
+                        $categoryClass = 'tag-research';
+                        break;
+                    default:
+                        $categoryClass = '';
+                }
+            @endphp
+
+            <span class="task-tag {{ $categoryClass }}">
                 @if($task->category == 'Design')
                     <i class="fas fa-palette"></i>
                 @elseif($task->category == 'Development')
@@ -24,12 +41,29 @@
         @endif
 
         @if($task->priority)
-            <span class="task-tag tag-{{ strtolower($task->priority) }}-priority">
+            @php
+                $priorityClass = '';
+                switch(strtolower($task->priority)) {
+                    case 'high':
+                        $priorityClass = 'tag-high-priority';
+                        break;
+                    case 'medium':
+                        $priorityClass = 'tag-medium-priority';
+                        break;
+                    case 'low':
+                        $priorityClass = 'tag-low-priority';
+                        break;
+                    default:
+                        $priorityClass = '';
+                }
+            @endphp
+
+            <span class="task-tag {{ $priorityClass }}">
                 @if($task->priority == 'High')
                     <i class="fas fa-exclamation-circle"></i>
                 @elseif($task->priority == 'Medium')
                     <i class="fas fa-exclamation-triangle"></i>
-                @else
+                @elseif($task->priority == 'Low')
                     <i class="fas fa-info-circle"></i>
                 @endif
                 {{ $task->priority }} Priority
@@ -41,7 +75,13 @@
         @if($task->due_date)
             <span class="task-date">
                 <i class="far fa-calendar"></i>
-                {{ \Carbon\Carbon::parse($task->due_date)->format('m/d/Y') }}
+                @php
+                    try {
+                        echo \Carbon\Carbon::parse($task->due_date)->format('m/d/Y');
+                    } catch (\Exception $e) {
+                        echo date('m/d/Y', strtotime($task->due_date));
+                    }
+                @endphp
             </span>
         @else
             <span class="task-date">
@@ -51,7 +91,7 @@
         @endif
 
         <span class="task-subtasks">
-            {{ $task->subtasks_completed }}/{{ $task->subtasks_total }}
+            {{ $task->subtasks_completed ?? 0 }}/{{ $task->subtasks_total ?? 0 }}
         </span>
     </div>
 </div>

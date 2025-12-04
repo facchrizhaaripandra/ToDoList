@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Task Board</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -305,6 +306,33 @@
             font-size: 40px;
             margin-bottom: 10px;
             opacity: 0.5;
+        }
+
+        .task-card.selected {
+            border: 2px solid #3498db;
+            background-color: #f8fafc;
+        }
+
+        .task-card.selected .task-title {
+            color: #3498db;
+        }
+
+        input[type="checkbox"]:indeterminate {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .select-all-label {
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 15px;
+            cursor: pointer;
         }
     </style>
 </head>

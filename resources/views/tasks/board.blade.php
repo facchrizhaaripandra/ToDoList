@@ -2,22 +2,30 @@
 
 @section('content')
 <div class="header-section">
-    <h1 class="header-title">Task Board</h1>
-    <p class="header-subtitle">Organize your tasks with drag and drop</p>
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="header-title">Task Board</h1>
+            <p class="header-subtitle">Organize your tasks with drag and drop</p>
+        </div>
+        <div class="select-all-container">
+            <input type="checkbox" id="selectAllTasks" style="width: 18px; height: 18px;">
+            <label for="selectAllTasks" class="select-all-label">Select All</label>
+        </div>
+    </div>
 
     <div class="filter-section">
         <span class="filter-label">Filter by Columns</span>
         <div class="filter-checkboxes">
             <div class="filter-checkbox">
-                <input type="checkbox" id="filterTodo" checked data-status="To Do">
+                <input type="checkbox" id="filterTodo" checked class="column-filter" data-column="todo">
                 <label for="filterTodo">To Do</label>
             </div>
             <div class="filter-checkbox">
-                <input type="checkbox" id="filterProgress" checked data-status="In Progress">
+                <input type="checkbox" id="filterProgress" checked class="column-filter" data-column="progress">
                 <label for="filterProgress">In Progress</label>
             </div>
             <div class="filter-checkbox">
-                <input type="checkbox" id="filterDone" checked data-status="Done">
+                <input type="checkbox" id="filterDone" checked class="column-filter" data-column="done">
                 <label for="filterDone">Done</label>
             </div>
         </div>
@@ -28,7 +36,7 @@
 
 <div class="row g-4" id="taskColumns">
     <!-- To Do Column -->
-    <div class="col-md-4 todo-column" id="todoColumn">
+    <div class="col-md-4 column-container column-todo">
         <div class="column-header todo-header">
             <h5 class="column-title">To Do</h5>
             <span class="task-count">{{ $todoCount }}</span>
@@ -53,7 +61,7 @@
     </div>
 
     <!-- In Progress Column -->
-    <div class="col-md-4 progress-column" id="progressColumn">
+    <div class="col-md-4 column-container column-progress">
         <div class="column-header progress-header">
             <h5 class="column-title">In Progress</h5>
             <span class="task-count">{{ $inProgressCount }}</span>
@@ -78,7 +86,7 @@
     </div>
 
     <!-- Done Column -->
-    <div class="col-md-4 done-column" id="doneColumn">
+    <div class="col-md-4 column-container column-done">
         <div class="column-header done-header">
             <h5 class="column-title">Done</h5>
             <span class="task-count">{{ $doneCount }}</span>
@@ -170,23 +178,167 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    // Set CSRF token for AJAX
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
     // Set modal status when Add Task button is clicked
     $('.add-task-btn').click(function() {
         var status = $(this).data('status');
         $('#modalStatus').val(status);
     });
 
-    // Filter columns
-    $('.filter-checkbox input[type="checkbox"]').change(function() {
-        var status = $(this).data('status');
+    // SIMPLE FILTER FUNCTION - FIXED VERSION
+    $('.column-filter').change(function() {
+        var column = $(this).data('column');
+        var isChecked = $(this).is(':checked');
+
+        console.log('Filter changed:', column, isChecked);
+
+        // Hide/show the column
+        if (column === 'todo') {
+            if (isChecked) {
+                $('.column-todo').show();
+            } else {
+                $('.column-todo').hide();
+            }
+        }
+        else if (column === 'progress') {
+            if (isChecked) {
+                $('.column-progress').show();
+            } else {
+                $('.column-progress').hide();
+            }
+        }
+        else if (column === 'done') {
+            if (isChecked) {
+                $('.column-done').show();
+            } else {
+                $('.column-done').hide();
+            }
+        }
+
+        // Adjust grid layout
+        adjustGridLayout();
+
+        // Save filter state
+        saveFilterState();
+    });
+
+    // Adjust grid layout based on visible columns
+    function adjustGridLayout() {
+        var visibleColumns = $('.column-container:visible').length;
+        console.log('Visible columns:', visibleColumns);
+
+        // Remove all column classes first
+        $('.column-container').removeClass('col-md-4 col-md-6 col-md-12');
+
+        // Apply appropriate column width
+        if (visibleColumns === 3) {
+            $('.column-container:visible').addClass('col-md-4');
+        } else if (visibleColumns === 2) {
+            $('.column-container:visible').addClass('col-md-6');
+        } else if (visibleColumns === 1) {
+            $('.column-container:visible').addClass('col-md-12');
+        }
+    }
+
+    // Select All Tasks functionality
+    $('#selectAllTasks').change(function() {
+        var isChecked = $(this).is(':checked');
+
+        // Select/Deselect all task checkboxes
+        $('.task-complete-checkbox').prop('checked', isChecked);
+
+        // Update visual selection
+        if (isChecked) {
+            $('.task-card').addClass('selected');
+        } else {
+            $('.task-card').removeClass('selected');
+        }
+
+        updateSelectAllState();
+    });
+
+    // Individual task checkbox
+    $(document).on('change', '.task-complete-checkbox', function() {
         var isChecked = $(this).is(':checked');
 
         if (isChecked) {
-            $('.' + status.toLowerCase().replace(' ', '-') + '-column').show();
+            $(this).closest('.task-card').addClass('selected');
         } else {
-            $('.' + status.toLowerCase().replace(' ', '-') + '-column').hide();
+            $(this).closest('.task-card').removeClass('selected');
         }
+
+        updateSelectAllState();
     });
+
+    // Update Select All checkbox state
+    function updateSelectAllState() {
+        var totalTasks = $('.task-complete-checkbox').length;
+        var checkedTasks = $('.task-complete-checkbox:checked').length;
+
+        if (checkedTasks === 0) {
+            $('#selectAllTasks').prop('checked', false);
+            $('#selectAllTasks').prop('indeterminate', false);
+        } else if (checkedTasks === totalTasks) {
+            $('#selectAllTasks').prop('checked', true);
+            $('#selectAllTasks').prop('indeterminate', false);
+        } else {
+            $('#selectAllTasks').prop('checked', false);
+            $('#selectAllTasks').prop('indeterminate', true);
+        }
+    }
+
+    // Save filter state to localStorage
+    function saveFilterState() {
+        var filterState = {
+            todo: $('#filterTodo').is(':checked'),
+            progress: $('#filterProgress').is(':checked'),
+            done: $('#filterDone').is(':checked')
+        };
+        localStorage.setItem('taskBoardFilter', JSON.stringify(filterState));
+    }
+
+    // Load filter state from localStorage
+    function loadFilterState() {
+        var savedState = localStorage.getItem('taskBoardFilter');
+        if (savedState) {
+            try {
+                var filterState = JSON.parse(savedState);
+
+                // Set checkbox states
+                $('#filterTodo').prop('checked', filterState.todo !== false);
+                $('#filterProgress').prop('checked', filterState.progress !== false);
+                $('#filterDone').prop('checked', filterState.done !== false);
+
+                // Apply filter immediately
+                $('.column-filter').each(function() {
+                    var column = $(this).data('column');
+                    var isChecked = $(this).is(':checked');
+
+                    if (column === 'todo') {
+                        $('.column-todo').toggle(isChecked);
+                    } else if (column === 'progress') {
+                        $('.column-progress').toggle(isChecked);
+                    } else if (column === 'done') {
+                        $('.column-done').toggle(isChecked);
+                    }
+                });
+
+                adjustGridLayout();
+            } catch (e) {
+                console.error('Error loading filter state:', e);
+            }
+        }
+    }
+
+    // Initialize
+    loadFilterState();
+    updateSelectAllState();
 
     // Drag and Drop functionality
     $('.task-card').attr('draggable', 'true');
@@ -216,7 +368,6 @@ $(document).ready(function() {
         var taskId = e.originalEvent.dataTransfer.getData('text/plain');
         var newStatus = $(this).data('status');
 
-        // Update task status via AJAX
         $.ajax({
             url: '/tasks/' + taskId + '/update-status',
             method: 'POST',
@@ -226,19 +377,15 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success) {
-                    // Move task to new column
                     var taskCard = $('[data-task-id="' + taskId + '"]');
                     $(this).append(taskCard);
 
-                    // Update counts
-                    $('.todo-column .task-count').text(response.todoCount);
-                    $('.progress-column .task-count').text(response.inProgressCount);
-                    $('.done-column .task-count').text(response.doneCount);
+                    $('.todo-header .task-count').text(response.todoCount);
+                    $('.progress-header .task-count').text(response.inProgressCount);
+                    $('.done-header .task-count').text(response.doneCount);
 
-                    // Remove empty message if exists
                     $(this).find('.empty-column').remove();
 
-                    // Show success message
                     showNotification('Task moved successfully!', 'success');
                 }
             }.bind(this),
@@ -247,15 +394,6 @@ $(document).ready(function() {
                 console.error('Error:', xhr.responseText);
             }
         });
-    });
-
-    // Task checkbox functionality
-    $('.task-checkbox input[type="checkbox"]').change(function() {
-        var taskId = $(this).closest('.task-card').data('task-id');
-        var isCompleted = $(this).is(':checked');
-
-        // You can add AJAX call here to update task completion status
-        console.log('Task', taskId, 'completed:', isCompleted);
     });
 
     // Notification function
@@ -273,10 +411,6 @@ $(document).ready(function() {
         setTimeout(function() {
             notification.alert('close');
         }, 3000);
-    }
-    $.ajaxSetup({
-    headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
     }
 });
 </script>
