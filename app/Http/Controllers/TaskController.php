@@ -7,150 +7,133 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(Request $request)
+    public function board()
     {
-        $filter = $request->get('filter');
+        $tasks = Task::all();
+        $todoCount = Task::where('status', 'To Do')->count();
+        $inProgressCount = Task::where('status', 'In Progress')->count();
+        $doneCount = Task::where('status', 'Done')->count();
 
-        // Base query
-        $query = Task::query();
-
-        // Apply filter if specified
-        if ($filter) {
-            switch ($filter) {
-                case 'pending':
-                    $query->where('completed', false);
-                    break;
-                case 'progress':
-                    $query->where('priority', 'high')->where('completed', false);
-                    break;
-                case 'completed':
-                    $query->where('completed', true);
-                    break;
-            }
-        }
-
-        // Get paginated tasks
-        $tasks = $query->latest()->paginate(12);
-
-        // Get counts for stats
-        $pendingCount = Task::where('completed', false)->count();
-        $inProgressCount = Task::where('priority', 'high')->where('completed', false)->count();
-        $completedCount = Task::where('completed', true)->count();
-
-        // Get tasks for each column
-        if (!$filter) {
-            // Show all columns with limited tasks
-            $pendingTasks = Task::where('completed', false)
-                ->orderBy('due_date', 'asc')
-                ->orderBy('priority', 'desc')
-                ->limit(10)
-                ->get();
-
-            $inProgressTasks = Task::where('priority', 'high')
-                ->where('completed', false)
-                ->orderBy('due_date', 'asc')
-                ->limit(8)
-                ->get();
-
-            $completedTasks = Task::where('completed', true)
-                ->orderBy('updated_at', 'desc')
-                ->limit(6)
-                ->get();
-        } else {
-            // If filtered, use paginated tasks
-            $pendingTasks = $filter == 'pending' ? $tasks->items() : [];
-            $inProgressTasks = $filter == 'progress' ? $tasks->items() : [];
-            $completedTasks = $filter == 'completed' ? $tasks->items() : [];
-
-            // Convert to collection
-            $pendingTasks = collect($pendingTasks);
-            $inProgressTasks = collect($inProgressTasks);
-            $completedTasks = collect($completedTasks);
-        }
-
-        return view('tasks.index', compact(
-            'tasks',
-            'pendingCount',
-            'inProgressCount',
-            'completedCount',
-            'pendingTasks',
-            'inProgressTasks',
-            'completedTasks',
-            'filter'
-        ));
+        return view('tasks.board', compact('tasks', 'todoCount', 'inProgressCount', 'doneCount'));
     }
 
-    public function create()
+    public function updateStatus(Request $request, $id)
     {
-        return view('tasks.create');
+        try {
+            $request->validate([
+                'status' => 'required|in:To Do,In Progress,Done'
+            ]);
+
+            $task = Task::findOrFail($id);
+            $task->status = $request->status;
+            $task->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task status updated successfully',
+                'todoCount' => Task::where('status', 'To Do')->count(),
+                'inProgressCount' => Task::where('status', 'In Progress')->count(),
+                'doneCount' => Task::where('status', 'Done')->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating task status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'status' => 'required|in:To Do,In Progress,Done',
+            'category' => 'nullable|string',
+            'priority' => 'required|in:High,Medium,Low',
             'due_date' => 'nullable|date',
-            'priority' => 'nullable|in:low,medium,high',
-            'completed' => 'boolean'
+            'subtasks_total' => 'nullable|integer|min:0',
         ]);
 
-        Task::create($validated);
-
-        return redirect()->route('tasks.index')
-            ->with('success', 'Task created successfully!');
-    }
-
-    public function show(Task $task)
-    {
-        return view('tasks.show', compact('task'));
-    }
-
-    public function edit(Task $task)
-    {
-        return view('tasks.edit', compact('task'));
-    }
-
-    public function update(Request $request, Task $task)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-            'priority' => 'nullable|in:low,medium,high',
-            'completed' => 'boolean'
+        Task::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'status' => $request->status,
+            'category' => $request->category,
+            'priority' => $request->priority,
+            'due_date' => $request->due_date,
+            'subtasks_total' => $request->subtasks_total ?? 0,
+            'subtasks_completed' => 0,
         ]);
 
-        $task->update($validated);
-
-        return redirect()->route('tasks.index')
-            ->with('success', 'Task updated successfully!');
+        return redirect()->route('tasks.board')->with('success', 'Task created successfully!');
     }
 
-    public function destroy(Task $task)
+    public function index()
     {
-        $task->delete();
-
-        return redirect()->route('tasks.index')
-            ->with('success', 'Task deleted successfully!');
+        return redirect()->route('tasks.board');
     }
 
-    public function toggle(Request $request, Task $task)
+    public function create()
     {
-        $completed = $request->get('completed', !$task->completed);
+        return redirect()->route('tasks.board');
+    }
 
-        $task->update([
-            'completed' => $completed
-        ]);
+    public function show($id)
+    {
+        return redirect()->route('tasks.board');
+    }
 
-        if ($request->ajax()) {
+    public function edit($id)
+    {
+        return redirect()->route('tasks.board');
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $task = Task::findOrFail($id);
+
+            $request->validate([
+                'title' => 'sometimes|required|string|max:255',
+                'description' => 'nullable|string',
+                'status' => 'sometimes|required|in:To Do,In Progress,Done',
+                'category' => 'nullable|string',
+                'priority' => 'sometimes|required|in:High,Medium,Low',
+                'due_date' => 'nullable|date',
+                'subtasks_total' => 'nullable|integer|min:0',
+                'subtasks_completed' => 'nullable|integer|min:0',
+            ]);
+
+            $task->update($request->all());
+
             return response()->json([
                 'success' => true,
-                'message' => 'Task status updated successfully'
+                'message' => 'Task updated successfully'
             ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating task: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
-        return redirect()->route('tasks.index')
-            ->with('success', 'Task status updated!');
+    public function destroy($id)
+    {
+        try {
+            $task = Task::findOrFail($id);
+            $task->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting task: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

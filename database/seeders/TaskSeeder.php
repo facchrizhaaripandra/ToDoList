@@ -2,35 +2,61 @@
 
 namespace Database\Seeders;
 
-use App\Models\Task;
 use Illuminate\Database\Seeder;
+use App\Models\Task;
 
 class TaskSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        Task::create([
-            'title' => 'Complete Laravel Project',
-            'description' => 'Finish the ToDo List application',
-            'completed' => false,
-            'due_date' => now()->addDays(3),
-            'priority' => 'high'
-        ]);
+        // Clear existing tasks
+        Task::truncate();
 
-        Task::create([
-            'title' => 'Buy Groceries',
-            'description' => 'Milk, Eggs, Bread, Fruits',
-            'completed' => true,
-            'due_date' => now()->subDays(1),
-            'priority' => 'medium'
-        ]);
+        $tasks = [
+            [
+                'title' => 'Design homepage mockup',
+                'description' => 'Create a modern homepage design with hero section and key...',
+                'status' => 'To Do',
+                'category' => 'Design',
+                'priority' => 'High',
+                'due_date' => '2025-12-10',
+                'subtasks_total' => 3,
+                'subtasks_completed' => 0,
+            ],
+            [
+                'title' => 'Create database schema',
+                'description' => 'Design and implement the database structure',
+                'status' => 'To Do',
+                'category' => 'Development',
+                'priority' => 'High',
+                'due_date' => '2025-12-12',
+                'subtasks_total' => 3,
+                'subtasks_completed' => 0,
+            ],
+            [
+                'title' => 'Set up project repository',
+                'description' => 'Initialize git repo and configure CI/CD pipeline',
+                'status' => 'In Progress',
+                'category' => 'Development',
+                'priority' => 'Medium',
+                'due_date' => '2025-12-08',
+                'subtasks_total' => 2,
+                'subtasks_completed' => 0,
+            ],
+            [
+                'title' => 'Research user requirements',
+                'description' => 'Conduct user interviews and gather requirements',
+                'status' => 'Done',
+                'category' => 'Research',
+                'priority' => 'Medium',
+                'due_date' => '2025-12-05',
+                'subtasks_total' => 2,
+                'subtasks_completed' => 2,
+            ],
+        ];
 
-        Task::create([
-            'title' => 'Read Book',
-            'description' => 'Finish reading Clean Code',
-            'completed' => false,
-            'due_date' => now()->addWeek(),
-            'priority' => 'low'
-        ]);
+        foreach ($tasks as $task) {
+            Task::create($task);
+        }
     }
 }

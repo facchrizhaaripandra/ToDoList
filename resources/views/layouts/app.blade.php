@@ -1,332 +1,320 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'TaskFlow')</title>
-    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/3208/3208720.png">
-
-    {{-- Font Awesome --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    {{-- Animate.css --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Board</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --secondary: #7c3aed;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --background: #f8fafc;
+            --todo-color: #e3f2fd;
+            --progress-color: #fff3e0;
+            --done-color: #e8f5e9;
+            --design-color: #e3f2fd;
+            --development-color: #f3e5f5;
+            --research-color: #e8f5e9;
+            --high-priority: #ffebee;
+            --medium-priority: #fff3e0;
+            --low-priority: #e8f5e9;
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            background-attachment: fixed;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+        .task-board-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
-        .board-column {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            min-width: 320px;
-            flex-shrink: 0;
+        .header-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .header-subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            color: #34495e;
+            font-size: 14px;
+        }
+
+        .filter-checkboxes {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 2px solid #bdc3c7;
+            cursor: pointer;
+        }
+
+        .filter-checkbox input[type="checkbox"]:checked {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+
+        .filter-checkbox label {
+            font-weight: 500;
+            color: #2c3e50;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        hr {
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #dfe6e9, transparent);
+            margin: 30px 0;
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 15px;
+        }
+
+        .todo-header {
+            background-color: var(--todo-color);
+            color: #1565c0;
+        }
+
+        .progress-header {
+            background-color: var(--progress-color);
+            color: #ef6c00;
+        }
+
+        .done-header {
+            background-color: var(--done-color);
+            color: #2e7d32;
+        }
+
+        .column-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .task-count {
+            background: white;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .task-column {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            min-height: 600px;
+            padding-bottom: 20px;
+            transition: all 0.3s;
         }
 
         .task-card {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border-left: 4px solid transparent;
             background: white;
-            cursor: move;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 0 15px 15px 15px;
+            transition: all 0.3s;
+            position: relative;
         }
 
         .task-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
         }
 
-        .priority-high { border-left-color: #ef4444; background: linear-gradient(to right, #fef2f2 0%, white 100%); }
-        .priority-medium { border-left-color: #f59e0b; background: linear-gradient(to right, #fffbeb 0%, white 100%); }
-        .priority-low { border-left-color: #10b981; background: linear-gradient(to right, #f0fdf4 0%, white 100%); }
-
-        .filter-active {
-            background: white !important;
-            color: #4f46e5 !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        .task-checkbox {
+            position: absolute;
+            top: 20px;
+            right: 20px;
         }
 
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        .task-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+            cursor: pointer;
         }
 
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
+        .task-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            padding-right: 30px;
         }
 
-        .scrollbar-thin {
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 #f1f5f9;
+        .task-description {
+            color: #7f8c8d;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            min-height: 40px;
         }
 
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        .task-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 3px;
+        .task-tag {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
+        .tag-design {
+            background-color: var(--design-color);
+            color: #1565c0;
         }
 
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+        .tag-development {
+            background-color: var(--development-color);
+            color: #7b1fa2;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .tag-research {
+            background-color: var(--research-color);
+            color: #2e7d32;
         }
 
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
+        .tag-high-priority {
+            background-color: var(--high-priority);
+            color: #c62828;
+            border: 1px solid #ffcdd2;
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        .tag-medium-priority {
+            background-color: var(--medium-priority);
+            color: #ef6c00;
         }
 
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
+        .tag-low-priority {
+            background-color: var(--low-priority);
+            color: #2e7d32;
         }
 
-        .blur-backdrop {
-            backdrop-filter: blur(4px);
+        .task-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+
+        .task-date {
+            font-size: 13px;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .task-subtasks {
+            font-size: 13px;
+            color: #636e72;
+            background: #f8f9fa;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .add-task-btn {
+            background: transparent;
+            border: 2px dashed #ddd;
+            color: #7f8c8d;
+            padding: 15px;
+            border-radius: 10px;
+            width: calc(100% - 30px);
+            margin: 0 15px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .add-task-btn:hover {
+            border-color: #3498db;
+            color: #3498db;
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .drag-over {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px dashed #3498db;
+        }
+
+        .empty-column {
+            text-align: center;
+            padding: 40px 20px;
+            color: #bdc3c7;
+            font-size: 14px;
+        }
+
+        .empty-column i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            opacity: 0.5;
         }
     </style>
 </head>
-<body class="h-full">
-    {{-- Navbar --}}
-    <nav class="glass-effect text-white shadow-xl sticky top-0 z-50">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <div class="p-2 bg-white/20 rounded-xl">
-                        <i class="fas fa-trello text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold tracking-tight">TaskFlow</h1>
-                        <p class="text-xs opacity-90">Visual Task Management</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-4">
-                    {{-- Filter Tabs --}}
-                    <div class="hidden md:flex items-center space-x-1 bg-white/10 rounded-lg p-1">
-                        <a href="{{ route('tasks.index') }}"
-                           class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                                  {{ request()->routeIs('tasks.index') && !request()->has('filter') ? 'filter-active' : 'text-white/90 hover:text-white' }}">
-                            <i class="fas fa-th-large mr-2"></i>All
-                        </a>
-                        <a href="{{ route('tasks.index', ['filter' => 'pending']) }}"
-                           class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                                  {{ request('filter') == 'pending' ? 'filter-active' : 'text-white/90 hover:text-white' }}">
-                            <i class="fas fa-clock mr-2"></i>Pending
-                        </a>
-                        <a href="{{ route('tasks.index', ['filter' => 'progress']) }}"
-                           class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                                  {{ request('filter') == 'progress' ? 'filter-active' : 'text-white/90 hover:text-white' }}">
-                            <i class="fas fa-spinner mr-2"></i>In Progress
-                        </a>
-                        <a href="{{ route('tasks.index', ['filter' => 'completed']) }}"
-                           class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                                  {{ request('filter') == 'completed' ? 'filter-active' : 'text-white/90 hover:text-white' }}">
-                            <i class="fas fa-check-circle mr-2"></i>Completed
-                        </a>
-                    </div>
-
-                    {{-- New Task Button --}}
-                    <a href="{{ route('tasks.create') }}"
-                       class="bg-white text-indigo-600 px-5 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200
-                              hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center space-x-2 group">
-                        <i class="fas fa-plus-circle group-hover:rotate-90 transition-transform duration-200"></i>
-                        <span>New Task</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    {{-- Flash Messages --}}
-    @if(session('success'))
-    <div class="container mx-auto px-6 mt-6">
-        <div class="animate__animated animate__fadeInDown bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 text-green-800 p-4 rounded-xl shadow-lg">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="p-2 bg-green-100 rounded-lg mr-3">
-                        <i class="fas fa-check-circle text-green-500"></i>
-                    </div>
-                    <div>
-                        <p class="font-semibold">{{ session('success') }}</p>
-                        <p class="text-sm text-green-600 mt-1">Your task has been updated successfully</p>
-                    </div>
-                </div>
-                <button type="button" onclick="this.parentElement.parentElement.remove()"
-                        class="text-green-600 hover:text-green-800 p-1 hover:bg-green-100 rounded-lg">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    {{-- Main Content --}}
-    <main class="min-h-[calc(100vh-140px)] py-8">
+<body>
+    <div class="task-board-container">
         @yield('content')
-    </main>
+    </div>
 
-    {{-- Footer --}}
-    <footer class="glass-effect text-white py-6 mt-8 border-t border-white/10">
-        <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-trello text-xl"></i>
-                        <h2 class="text-lg font-bold">TaskFlow Pro</h2>
-                    </div>
-                    <p class="text-white/70 text-sm mt-1">Visual task management for modern teams</p>
-                </div>
-
-                <div class="flex items-center space-x-8">
-                    <div class="text-center">
-                        <div class="text-2xl font-bold">{{ \App\Models\Task::count() }}</div>
-                        <div class="text-xs text-white/70">Total Tasks</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold">{{ \App\Models\Task::where('completed', true)->count() }}</div>
-                        <div class="text-xs text-white/70">Completed</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold">{{ \App\Models\Task::where('completed', false)->count() }}</div>
-                        <div class="text-xs text-white/70">Pending</div>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-white/20 mt-6 pt-6 text-center text-white/60 text-sm">
-                <p>© {{ date('Y') }} TaskFlow. Built with Laravel & Tailwind CSS</p>
-            </div>
-        </div>
-    </footer>
-
-    {{-- JavaScript --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-hide alerts
-            setTimeout(() => {
-                const alerts = document.querySelectorAll('[role="alert"]');
-                alerts.forEach(alert => {
-                    alert.style.transition = 'opacity 0.5s';
-                    alert.style.opacity = '0';
-                    setTimeout(() => alert.remove(), 500);
-                });
-            }, 5000);
-
-            // Smooth scroll for horizontal board
-            const boardContainer = document.querySelector('.board-container');
-            if (boardContainer) {
-                let isDown = false;
-                let startX;
-                let scrollLeft;
-
-                boardContainer.addEventListener('mousedown', (e) => {
-                    isDown = true;
-                    boardContainer.classList.add('active');
-                    startX = e.pageX - boardContainer.offsetLeft;
-                    scrollLeft = boardContainer.scrollLeft;
-                });
-
-                boardContainer.addEventListener('mouseleave', () => {
-                    isDown = false;
-                    boardContainer.classList.remove('active');
-                });
-
-                boardContainer.addEventListener('mouseup', () => {
-                    isDown = false;
-                    boardContainer.classList.remove('active');
-                });
-
-                boardContainer.addEventListener('mousemove', (e) => {
-                    if (!isDown) return;
-                    e.preventDefault();
-                    const x = e.pageX - boardContainer.offsetLeft;
-                    const walk = (x - startX) * 2;
-                    boardContainer.scrollLeft = scrollLeft - walk;
-                });
-            }
-
-            // Task counter animation
-            const counters = document.querySelectorAll('.counter');
-            counters.forEach(counter => {
-                const target = +counter.getAttribute('data-count');
-                const count = +counter.innerText;
-                const increment = target / 100;
-
-                if (count < target) {
-                    const updateCount = () => {
-                        const currentCount = +counter.innerText;
-                        if (currentCount < target) {
-                            counter.innerText = Math.ceil(currentCount + increment);
-                            setTimeout(updateCount, 10);
-                        } else {
-                            counter.innerText = target;
-                        }
-                    };
-                    updateCount();
-                }
-            });
-        });
-
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-6 right-6 p-4 rounded-xl shadow-2xl text-white z-50 animate__animated animate__fadeInRight ${
-                type === 'success' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
-            }`;
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <div class="p-2 bg-white/20 rounded-lg mr-3">
-                        <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}"></i>
-                    </div>
-                    <div>
-                        <p class="font-semibold">${message}</p>
-                        <p class="text-sm opacity-90">${type === 'success' ? 'Action completed successfully' : 'Something went wrong'}</p>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.classList.add('animate__fadeOutRight');
-                setTimeout(() => notification.remove(), 500);
-            }, 3000);
-        }
-    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    @stack('scripts')
 </body>
 </html>
