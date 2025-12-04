@@ -7,12 +7,77 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $tasks = Task::latest()->paginate(10);
-        $completedTasks = Task::where('completed', true)->count();
+        $filter = $request->get('filter');
 
-        return view('tasks.index', compact('tasks', 'completedTasks'));
+        // Base query
+        $query = Task::query();
+
+        // Apply filter if specified
+        if ($filter) {
+            switch ($filter) {
+                case 'pending':
+                    $query->where('completed', false);
+                    break;
+                case 'progress':
+                    $query->where('priority', 'high')->where('completed', false);
+                    break;
+                case 'completed':
+                    $query->where('completed', true);
+                    break;
+            }
+        }
+
+        // Get paginated tasks
+        $tasks = $query->latest()->paginate(12);
+
+        // Get counts for stats
+        $pendingCount = Task::where('completed', false)->count();
+        $inProgressCount = Task::where('priority', 'high')->where('completed', false)->count();
+        $completedCount = Task::where('completed', true)->count();
+
+        // Get tasks for each column
+        if (!$filter) {
+            // Show all columns with limited tasks
+            $pendingTasks = Task::where('completed', false)
+                ->orderBy('due_date', 'asc')
+                ->orderBy('priority', 'desc')
+                ->limit(10)
+                ->get();
+
+            $inProgressTasks = Task::where('priority', 'high')
+                ->where('completed', false)
+                ->orderBy('due_date', 'asc')
+                ->limit(8)
+                ->get();
+
+            $completedTasks = Task::where('completed', true)
+                ->orderBy('updated_at', 'desc')
+                ->limit(6)
+                ->get();
+        } else {
+            // If filtered, use paginated tasks
+            $pendingTasks = $filter == 'pending' ? $tasks->items() : [];
+            $inProgressTasks = $filter == 'progress' ? $tasks->items() : [];
+            $completedTasks = $filter == 'completed' ? $tasks->items() : [];
+
+            // Convert to collection
+            $pendingTasks = collect($pendingTasks);
+            $inProgressTasks = collect($inProgressTasks);
+            $completedTasks = collect($completedTasks);
+        }
+
+        return view('tasks.index', compact(
+            'tasks',
+            'pendingCount',
+            'inProgressCount',
+            'completedCount',
+            'pendingTasks',
+            'inProgressTasks',
+            'completedTasks',
+            'filter'
+        ));
     }
 
     public function create()
@@ -70,39 +135,22 @@ class TaskController extends Controller
             ->with('success', 'Task deleted successfully!');
     }
 
-    public function toggle(Task $task)
+    public function toggle(Request $request, Task $task)
     {
+        $completed = $request->get('completed', !$task->completed);
+
         $task->update([
-            'completed' => !$task->completed
+            'completed' => $completed
         ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Task status updated successfully'
+            ]);
+        }
 
         return redirect()->route('tasks.index')
             ->with('success', 'Task status updated!');
-    }
-
-    public function filter($filter)
-    {
-        $query = Task::query();
-
-        switch ($filter) {
-            case 'completed':
-                $query->where('completed', true);
-                break;
-            case 'pending':
-                $query->where('completed', false);
-                break;
-            case 'high':
-                $query->where('priority', 'high');
-                break;
-            case 'overdue':
-                $query->where('due_date', '<', now())
-                      ->where('completed', false);
-                break;
-        }
-
-        $tasks = $query->latest()->paginate(10);
-        $completedTasks = Task::where('completed', true)->count();
-
-        return view('tasks.index', compact('tasks', 'completedTasks'));
     }
 }

@@ -3,17 +3,30 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TaskController;
 
+// Redirect root to tasks
 Route::get('/', function () {
     return redirect()->route('tasks.index');
 });
 
-// Resource routes dengan semua metode
-Route::resource('tasks', TaskController::class);
+// Task Routes
+Route::prefix('tasks')->group(function () {
+    // Index with filter
+    Route::get('/', [TaskController::class, 'index'])->name('tasks.index');
 
-// Route tambahan untuk toggle complete
-Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggle'])
-    ->name('tasks.toggle');
+    // Create
+    Route::get('/create', [TaskController::class, 'create'])->name('tasks.create');
+    Route::post('/', [TaskController::class, 'store'])->name('tasks.store');
 
-// Route untuk filter
-Route::get('/tasks/filter/{filter}', [TaskController::class, 'filter'])
-    ->name('tasks.filter');
+    // Edit
+    Route::get('/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
+    Route::put('/{task}', [TaskController::class, 'update'])->name('tasks.update');
+
+    // Delete
+    Route::delete('/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+
+    // Toggle complete
+    Route::patch('/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
+
+    // Show single task (optional)
+    Route::get('/{task}', [TaskController::class, 'show'])->name('tasks.show');
+});
