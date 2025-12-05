@@ -30,18 +30,6 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasColumn('tasks', 'due_date')) {
-            Schema::table('tasks', function (Blueprint $table) {
-                $table->date('due_date')->nullable();
-            });
-        }
-
-        if (!Schema::hasColumn('tasks', 'subtasks_completed')) {
-            Schema::table('tasks', function (Blueprint $table) {
-                $table->integer('subtasks_completed')->default(0);
-            });
-        }
-
         if (!Schema::hasColumn('tasks', 'subtasks_total')) {
             Schema::table('tasks', function (Blueprint $table) {
                 $table->integer('subtasks_total')->default(0);

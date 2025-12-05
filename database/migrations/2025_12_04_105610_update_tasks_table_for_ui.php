@@ -18,9 +18,6 @@ return new class extends Migration
             if (!Schema::hasColumn('tasks', 'priority')) {
                 $table->enum('priority', ['High', 'Medium', 'Low'])->default('Medium');
             }
-            if (!Schema::hasColumn('tasks', 'due_date')) {
-                $table->date('due_date')->nullable();
-            }
             if (!Schema::hasColumn('tasks', 'subtasks_total')) {
                 $table->integer('subtasks_total')->default(0);
             }

@@ -25,6 +25,7 @@ class TaskController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'due_date' => 'nullable|date',
             'category_id' => 'nullable|exists:categories,id',
             'column_id' => 'required|exists:columns,id'
         ]);
@@ -32,6 +33,7 @@ class TaskController extends Controller
         Task::create([
             'title' => $request->title,
             'description' => $request->description,
+            'due_date' => $request->due_date,
             'category_id' => $request->category_id ?: null,
             'column_id' => $request->column_id
         ]);
@@ -50,33 +52,22 @@ class TaskController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'due_date' => 'nullable|date',
             'category_id' => 'nullable|exists:categories,id',
             'column_id' => 'required|exists:columns,id'
         ]);
 
         $task = Task::findOrFail($id);
 
-        // Debug logging
-        \Log::info('Updating task', [
-            'task_id' => $id,
-            'category_id' => $request->category_id,
-            'data' => $request->all()
-        ]);
-
         $task->update([
             'title' => $request->title,
             'description' => $request->description,
+            'due_date' => $request->due_date,
             'category_id' => $request->category_id ?: null,
             'column_id' => $request->column_id
         ]);
 
-        // Refresh task with category
         $task->load('category');
-
-        \Log::info('Task updated', [
-            'task' => $task->toArray(),
-            'category' => $task->category
-        ]);
 
         return response()->json([
             'success' => true,
