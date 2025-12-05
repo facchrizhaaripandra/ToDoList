@@ -1,6 +1,6 @@
-# 📋 Aplikasi To-Do List Kanban
+# 📋 Aplikasi To-Do List
 
-Aplikasi manajemen tugas berbasis web yang modern dan interaktif dengan antarmuka Kanban. Dibangun menggunakan **Laravel**, **Bootstrap 5**, dan **JavaScript** untuk pengalaman pengguna yang responsif.
+Aplikasi manajemen tugas berbasis web yang modern dan interaktif dengan antarmuka. Dibangun menggunakan **Laravel**, **Bootstrap 5**, dan **JavaScript** untuk pengalaman pengguna yang responsif.
 
 ## ✨ Fitur Utama
 
@@ -39,13 +39,10 @@ Aplikasi manajemen tugas berbasis web yang modern dan interaktif dengan antarmuk
 
 -   **Laravel 11** - Framework PHP modern
 -   **MySQL** - Database relasional
--   **Eloquent ORM** - Query builder yang elegan
--   **Carbon** - Manipulasi dan pemformatan tanggal
 
 ### Frontend
 
 -   **Bootstrap 5** - Framework CSS responsif
--   **jQuery 3.6** - Manipulasi DOM dan AJAX
 -   **Select2 4.1** - Dropdown yang dapat dicari
 -   **Sortable.js** - Drag-and-drop yang intuitif
 -   **Flatpickr** - Date picker tanpa dependensi
@@ -121,8 +118,6 @@ php artisan db:seed
 
 ```bash
 npm run dev
-# atau untuk production:
-npm run build
 ```
 
 ### 9. Jalankan Development Server
@@ -194,32 +189,6 @@ todo-app/
 -   `password` - Password terenkripsi
 -   `created_at`, `updated_at` - Timestamp
 
-## 🎯 API Endpoints
-
-### Tugas
-
--   `GET /tasks` - Tampilkan semua tugas
--   `POST /tasks` - Buat tugas baru
--   `GET /tasks/{id}` - Tampilkan detail tugas
--   `PUT /tasks/{id}` - Update tugas
--   `DELETE /tasks/{id}` - Hapus tugas
--   `POST /tasks/{id}/update-column` - Pindahkan tugas ke kolom lain
-
-### Kategori
-
--   `GET /categories` - Tampilkan semua kategori
--   `POST /categories` - Buat kategori baru
--   `PUT /categories/{id}` - Update kategori
--   `DELETE /categories/{id}` - Hapus kategori
-
-### Kolom
-
--   `GET /columns` - Tampilkan semua kolom
--   `POST /columns` - Buat kolom baru
--   `PUT /columns/{id}` - Update kolom
--   `DELETE /columns/{id}` - Hapus kolom
--   `POST /columns/reorder` - Urutkan kolom
-
 ## 🎮 Cara Penggunaan
 
 ### 1. Membuat Tugas Baru
@@ -284,29 +253,6 @@ todo-app/
 -   **Low**: Tugas akan jatuh tempo dalam 8-14 hari
 -   **None**: Tugas akan jatuh tempo lebih dari 14 hari atau tanpa tanggal
 
-## 🧪 Testing
-
-### Jalankan Unit Tests
-
-```bash
-php artisan test
-```
-
-### Jalankan Seeder untuk Data Test
-
-```bash
-php artisan db:seed --class=TaskSeeder
-```
-
-## 📚 Dokumentasi Kode
-
-Setiap file memiliki dokumentasi lengkap:
-
--   **Models**: Property descriptions dan method documentation
--   **Controllers**: Comprehensive DocBlocks untuk setiap method
--   **Views**: Comments untuk section JavaScript yang penting
--   **CSS**: Organized sections dengan explanatory comments
-
 ## 🐛 Troubleshooting
 
 ### Database Connection Error
@@ -323,32 +269,3 @@ php artisan migrate:fresh
 npm run dev
 php artisan cache:clear
 ```
-
-### Permission Denied di Storage
-
-```bash
-# Set permissions
-chmod -R 775 storage bootstrap/cache
-```
-
-## 📞 Support & Kontribusi
-
-Jika Anda menemukan bug atau ingin berkontribusi:
-
-1. Fork repository
-2. Buat branch untuk fitur Anda (`git checkout -b feature/AmazingFeature`)
-3. Commit perubahan (`git commit -m 'Add some AmazingFeature'`)
-4. Push ke branch (`git push origin feature/AmazingFeature`)
-5. Buka Pull Request
-
-## 📄 Lisensi
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
