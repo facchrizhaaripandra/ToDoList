@@ -11,21 +11,15 @@ class Task extends Model
 
     protected $fillable = ['title', 'description', 'category_id', 'column_id'];
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        // Set column_id default jika tidak ada
-        static::creating(function ($task) {
-            if (!$task->column_id) {
-                $task->column_id = Column::first()->id ?? null;
-            }
-        });
-    }
+    protected $with = ['category']; // Auto-load category
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class)->withDefault([
+            'name' => 'No Category',
+            'color' => '#95a5a6',
+            'icon' => 'fas fa-question'
+        ]);
     }
 
     public function column()

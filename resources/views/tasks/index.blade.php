@@ -12,11 +12,8 @@
         .select2-container--open {
             z-index: 9999 !important;
         }
-        .modal {
-            z-index: 1050;
-        }
-        .modal-backdrop {
-            z-index: 1040;
+        .select2-dropdown {
+            z-index: 99999 !important;
         }
 
         body {
@@ -35,6 +32,7 @@
             border-radius: 10px;
             padding: 20px;
             min-width: 320px;
+            max-width: 350px;
             min-height: 600px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border: 1px solid #e0e0e0;
@@ -56,32 +54,70 @@
             cursor: move;
             transition: all 0.3s ease;
             border: 1px solid #e8e8e8;
+            max-width: 100%;
+            overflow: hidden;
         }
         .task-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
+
+        .task-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #2c3e50;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.4;
+            max-width: 100%;
+        }
+
+        .task-description {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-height: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .task-description-expanded {
+            max-height: none;
+            -webkit-line-clamp: unset;
+        }
+
+        .read-more-btn {
+            background: none;
+            border: none;
+            color: #3498db;
+            padding: 0;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
         .category-badge {
             font-size: 0.75rem;
             padding: 4px 10px;
-            margin-right: 5px;
             border-radius: 20px;
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .color-preview {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        .icon-preview {
-            width: 20px;
-            text-align: center;
-            margin-right: 5px;
-        }
+
         .add-column-btn {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             border: none;
@@ -99,10 +135,7 @@
         .add-column-btn:hover {
             transform: scale(1.05);
         }
-        .navbar-brand {
-            font-weight: 600;
-            color: #2c3e50 !important;
-        }
+
         .drag-handle {
             cursor: move;
             color: #7f8c8d;
@@ -114,6 +147,7 @@
         .task-card:hover .task-actions {
             opacity: 1;
         }
+
         .color-option {
             width: 30px;
             height: 30px;
@@ -142,6 +176,7 @@
             border-color: #3498db;
             background: #ebf5fb;
         }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -151,41 +186,31 @@
             font-size: 48px;
             margin-bottom: 15px;
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            height: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #a1a1a1;
-        }
 
-        /* FIX SELECT2 STYLING IN MODALS */
-        .modal .select2-container {
-            width: 100% !important;
-        }
-        .modal .select2-selection {
-            border: 1px solid #ced4da;
-            height: 38px;
+        .task-header {
             display: flex;
-            align-items: center;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            gap: 10px;
         }
-        .modal .select2-selection__rendered {
-            line-height: 36px !important;
-        }
-        .modal .select2-selection__arrow {
-            height: 36px !important;
+        .task-header-content {
+            flex: 1;
+            min-width: 0;
         }
 
-        /* Ensure dropdown appears above modal */
-        .select2-dropdown {
-            z-index: 99999 !important;
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .no-category {
+            color: #95a5a6;
+            font-style: italic;
         }
     </style>
 </head>
@@ -209,7 +234,7 @@
 
     <!-- Kanban Board -->
     <div class="container-fluid">
-        <div class="kanban-board custom-scrollbar" id="kanbanBoard">
+        <div class="kanban-board" id="kanbanBoard">
             @foreach($columns as $column)
             <div class="column" data-column-id="{{ $column->id }}">
                 <div class="column-header d-flex justify-content-between align-items-center">
@@ -239,13 +264,15 @@
                 <div class="tasks-list" id="tasks-list-{{ $column->id }}">
                     @if($column->tasks->count() > 0)
                         @foreach($column->tasks as $task)
-                        <div class="task-card" draggable="true" data-task-id="{{ $task->id }}" id="task-{{ $task->id }}">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div class="d-flex align-items-center">
-                                    <span class="drag-handle me-2">
-                                        <i class="fas fa-grip-vertical"></i>
-                                    </span>
-                                    <h6 class="mb-0 task-title">{{ $task->title }}</h6>
+                        <div class="task-card" draggable="true" data-task-id="{{ $task->id }}" id="task-{{ $task->id }}" data-category-id="{{ $task->category_id }}">
+                            <div class="task-header">
+                                <div class="task-header-content">
+                                    <div class="d-flex align-items-start">
+                                        <span class="drag-handle me-2 mt-1">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </span>
+                                        <h6 class="mb-0 task-title">{{ $task->title }}</h6>
+                                    </div>
                                 </div>
                                 <div class="task-actions">
                                     <button class="btn btn-sm btn-outline-primary edit-task"
@@ -262,22 +289,39 @@
                             </div>
 
                             @if($task->description)
-                            <p class="text-muted small mb-3 task-description">{{ $task->description }}</p>
+                            <div class="description-container">
+                                <p class="text-muted small mb-2 task-description" id="description-{{ $task->id }}">
+                                    {{ $task->description }}
+                                </p>
+                                @if(strlen($task->description) > 100)
+                                <button class="read-more-btn" data-task-id="{{ $task->id }}">
+                                    <span class="read-more-text">Read more</span>
+                                    <span class="read-less-text" style="display: none;">Read less</span>
+                                </button>
+                                @endif
+                            </div>
                             @endif
 
-                            @if($task->category)
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="task-meta">
+                                @if($task->category)
                                 <span class="badge category-badge"
-                                      style="background-color: {{ $task->category->color }}20; color: {{ $task->category->color }}; border: 1px solid {{ $task->category->color }}30;">
+                                      style="background-color: {{ $task->category->color }}20; color: {{ $task->category->color }}; border: 1px solid {{ $task->category->color }}30;"
+                                      title="{{ $task->category->name }}">
                                     <i class="{{ $task->category->icon }} me-1"></i>
                                     {{ $task->category->name }}
                                 </span>
+                                @else
+                                <span class="badge category-badge no-category"
+                                      style="background-color: #95a5a620; color: #95a5a6; border: 1px solid #95a5a630;">
+                                    <i class="fas fa-question me-1"></i>
+                                    No Category
+                                </span>
+                                @endif
                                 <small class="text-muted">
                                     <i class="far fa-clock me-1"></i>
                                     {{ $task->created_at->format('M d') }}
                                 </small>
                             </div>
-                            @endif
                         </div>
                         @endforeach
                     @else
@@ -290,12 +334,11 @@
 
                 <button class="btn btn-outline-primary w-100 mt-3 add-to-column"
                         data-column-id="{{ $column->id }}">
-                    <i class="fas fa-plus me-1"></i> Add Task to this Column
+                    <i class="fas fa-plus me-1"></i> Add Task
                 </button>
             </div>
             @endforeach
 
-            <!-- Add Column Button -->
             <div class="column d-flex align-items-center justify-content-center">
                 <button class="add-column-btn" id="addColumnBtn">
                     <i class="fas fa-plus me-2"></i> Add New Column
@@ -306,9 +349,9 @@
 
     <!-- Add Task Modal -->
     <div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <form action="{{ route('tasks.store') }}" method="POST" id="addTaskForm">
+                <form id="addTaskForm" method="POST">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Add New Task</h5>
@@ -320,42 +363,38 @@
                         <div class="mb-3">
                             <label class="form-label">Title *</label>
                             <input type="text" name="title" class="form-control" required
-                                   placeholder="Enter task title">
+                                   placeholder="Enter task title" maxlength="200">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Description</label>
                             <textarea name="description" class="form-control" rows="3"
-                                      placeholder="Enter task description"></textarea>
+                                      placeholder="Enter task description" maxlength="1000"></textarea>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Select Column</label>
-                            <select name="column_id" class="form-select" id="selectColumnId">
-                                @foreach($columns as $column)
-                                <option value="{{ $column->id }}">{{ $column->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select name="category_id" class="form-control select2-modal" id="categorySelect">
-                                <option value="">Select Category</option>
-                                @foreach($categories as $category)
-                                <option value="{{ $category->id }}"
-                                        data-color="{{ $category->color }}"
-                                        data-icon="{{ $category->icon }}">
-                                    <i class="{{ $category->icon }} me-2" style="color: {{ $category->color }}"></i>
-                                    {{ $category->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Category can be created using "Add Category" button in the navbar
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Select Column</label>
+                                <select name="column_id" class="form-select" id="selectColumnId">
+                                    @foreach($columns as $column)
+                                    <option value="{{ $column->id }}">{{ $column->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Category</label>
+                                <select name="category_id" class="form-control select2-modal" id="categorySelect">
+                                    <option value="">No Category</option>
+                                    @foreach($categories as $category)
+                                    <option value="{{ $category->id }}"
+                                            data-color="{{ $category->color }}"
+                                            data-icon="{{ $category->icon }}">
+                                        <i class="{{ $category->icon }} me-2" style="color: {{ $category->color }}"></i>
+                                        {{ $category->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -371,7 +410,7 @@
 
     <!-- Edit Task Modal -->
     <div class="modal fade" id="editTaskModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <form id="editTaskForm" method="POST">
                     @csrf
@@ -382,34 +421,36 @@
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="column_id" id="editColumnId">
+                        <input type="hidden" id="currentTaskId">
 
                         <div class="mb-3">
                             <label class="form-label">Title *</label>
-                            <input type="text" name="title" id="editTitle" class="form-control" required>
+                            <input type="text" name="title" id="editTitle" class="form-control" required maxlength="200">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Description</label>
-                            <textarea name="description" id="editDescription" class="form-control" rows="3"></textarea>
+                            <textarea name="description" id="editDescription" class="form-control" rows="3" maxlength="1000"></textarea>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Select Column</label>
-                            <select name="column_id" class="form-select" id="editTaskColumnId">
-                                @foreach($columns as $column)
-                                <option value="{{ $column->id }}">{{ $column->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select name="category_id" class="form-control select2-modal" id="editCategoryId">
-                                <option value="">Select Category</option>
-                                @foreach($categories as $category)
-                                <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                @endforeach
-                            </select>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Select Column</label>
+                                <select name="column_id" class="form-select" id="editTaskColumnId">
+                                    @foreach($columns as $column)
+                                    <option value="{{ $column->id }}">{{ $column->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Category</label>
+                                <select name="category_id" class="form-control select2-modal" id="editCategoryId">
+                                    <option value="">No Category</option>
+                                    @foreach($categories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -437,7 +478,7 @@
                         <div class="mb-3">
                             <label class="form-label">Category Name *</label>
                             <input type="text" name="name" class="form-control" required
-                                   placeholder="Enter category name">
+                                   placeholder="Enter category name" maxlength="50">
                         </div>
 
                         <div class="mb-3">
@@ -514,7 +555,6 @@
         </div>
     </div>
 
-    <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -522,18 +562,14 @@
 
     <script>
         $(document).ready(function() {
-            // Initialize Select2 for modals with proper z-index fix
+            // Initialize Select2 for modals
             function initializeSelect2ForModal() {
                 $('.select2-modal').select2({
                     dropdownParent: $('#addTaskModal, #editTaskModal'),
-                    templateResult: formatCategory,
-                    templateSelection: formatCategory,
-                    width: '100%',
-                    dropdownCssClass: 'select2-dropdown-modal'
+                    width: '100%'
                 });
             }
 
-            // Re-initialize Select2 when modal opens
             $('#addTaskModal').on('shown.bs.modal', function() {
                 initializeSelect2ForModal();
             });
@@ -542,36 +578,30 @@
                 initializeSelect2ForModal();
             });
 
-            function formatCategory(category) {
-                if (!category.id) return category.text;
+            // Read More functionality
+            $(document).on('click', '.read-more-btn', function() {
+                var taskId = $(this).data('task-id');
+                var description = $('#description-' + taskId);
+                var readMoreText = $(this).find('.read-more-text');
+                var readLessText = $(this).find('.read-less-text');
 
-                var color = $(category.element).data('color');
-                var icon = $(category.element).data('icon');
-
-                if (!color) return category.text;
-
-                var $container = $('<span></span>');
-                $container.append(
-                    $('<i class="me-2"></i>')
-                        .addClass(icon)
-                        .css('color', color)
-                );
-                $container.append(
-                    $('<span></span>').text(category.text)
-                );
-
-                return $container;
-            }
+                if (description.hasClass('task-description-expanded')) {
+                    description.removeClass('task-description-expanded');
+                    readMoreText.show();
+                    readLessText.hide();
+                } else {
+                    description.addClass('task-description-expanded');
+                    readMoreText.hide();
+                    readLessText.show();
+                }
+            });
 
             // Initialize Sortable for Kanban Board
             var kanbanBoard = document.getElementById('kanbanBoard');
-            var columnSortable = Sortable.create(kanbanBoard, {
+            Sortable.create(kanbanBoard, {
                 group: 'columns',
                 animation: 150,
                 handle: '.column-header',
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
                 onEnd: function(evt) {
                     var columnOrder = [];
                     $('.column').each(function() {
@@ -586,13 +616,6 @@
                         data: {
                             _token: '{{ csrf_token() }}',
                             order: columnOrder
-                        },
-                        success: function() {
-                            console.log('Columns reordered successfully');
-                        },
-                        error: function() {
-                            alert('Error reordering columns');
-                            location.reload();
                         }
                     });
                 }
@@ -608,9 +631,6 @@
                         group: 'tasks',
                         animation: 150,
                         handle: '.drag-handle',
-                        ghostClass: 'sortable-ghost',
-                        chosenClass: 'sortable-chosen',
-                        dragClass: 'sortable-drag',
                         onEnd: function(evt) {
                             var taskId = evt.item.dataset.taskId;
                             var newColumnId = $(evt.to).closest('.column').data('column-id');
@@ -626,40 +646,12 @@
                                 },
                                 success: function() {
                                     console.log('Task moved successfully');
-
-                                    // Update task count badge
-                                    var oldColumnId = $(evt.from).closest('.column').data('column-id');
-                                    updateColumnTaskCount(oldColumnId);
-                                    updateColumnTaskCount(newColumnId);
-                                },
-                                error: function() {
-                                    alert('Error moving task');
-                                    location.reload();
                                 }
                             });
                         }
                     });
                 }
             });
-
-            function updateColumnTaskCount(columnId) {
-                var column = $('.column[data-column-id="' + columnId + '"]');
-                var taskCount = column.find('.task-card').length;
-                column.find('.badge.bg-light').text(taskCount);
-
-                // Show/hide empty state
-                var tasksList = column.find('.tasks-list');
-                if (taskCount === 0) {
-                    if (!tasksList.find('.empty-state').length) {
-                        tasksList.html(
-                            '<div class="empty-state">' +
-                            '<i class="fas fa-tasks text-muted"></i>' +
-                            '<p class="mb-0">No tasks yet</p>' +
-                            '</div>'
-                        );
-                    }
-                }
-            }
 
             // Add Task to specific column
             $('.add-to-column').click(function(e) {
@@ -670,48 +662,37 @@
                 $('#addTaskModal').modal('show');
             });
 
-            // Edit Task
+            // Edit Task - Load data via AJAX
             $('.edit-task').click(function() {
                 var taskId = $(this).data('task-id');
-                var taskCard = $('#task-' + taskId);
+                $('#currentTaskId').val(taskId);
 
-                // Get task data from DOM
-                var title = taskCard.find('.task-title').text();
-                var description = taskCard.find('.task-description').text() || '';
-                var columnId = taskCard.closest('.column').data('column-id');
+                $.ajax({
+                    url: '/tasks/' + taskId,
+                    method: 'GET',
+                    success: function(response) {
+                        console.log('Task data loaded:', response);
 
-                // Get category ID if exists
-                var categoryId = '';
-                var categoryBadge = taskCard.find('.category-badge');
-                if (categoryBadge.length) {
-                    var categoryName = categoryBadge.text().trim();
-                    // Find category by name
-                    var categoryOption = $('#editCategoryId option').filter(function() {
-                        return $(this).text().trim() === categoryName;
-                    }).first();
-                    if (categoryOption.length) {
-                        categoryId = categoryOption.val();
+                        $('#editTitle').val(response.title);
+                        $('#editDescription').val(response.description);
+                        $('#editTaskColumnId').val(response.column_id);
+                        $('#editColumnId').val(response.column_id);
+
+                        // Set category - check if category exists
+                        if (response.category_id) {
+                            $('#editCategoryId').val(response.category_id).trigger('change');
+                        } else {
+                            $('#editCategoryId').val('').trigger('change');
+                        }
+
+                        // Set form action
+                        $('#editTaskForm').attr('action', '/tasks/' + taskId);
+                    },
+                    error: function(xhr) {
+                        console.error('Error loading task:', xhr);
+                        alert('Error loading task data');
                     }
-                }
-
-                // Set form values
-                $('#editTitle').val(title);
-                $('#editDescription').val(description);
-                $('#editTaskColumnId').val(columnId);
-                $('#editColumnId').val(columnId);
-
-                // Set form action
-                $('#editTaskForm').attr('action', '/tasks/' + taskId);
-
-                // Show modal first, then set category value
-                $('#editTaskModal').modal('show');
-
-                // Set category after a small delay to ensure Select2 is initialized
-                setTimeout(function() {
-                    if (categoryId) {
-                        $('#editCategoryId').val(categoryId).trigger('change');
-                    }
-                }, 500);
+                });
             });
 
             // Submit Edit Task Form
@@ -720,24 +701,116 @@
 
                 var form = $(this);
                 var url = form.attr('action');
-                var method = form.find('input[name="_method"]').val();
                 var formData = form.serialize();
+                var taskId = $('#currentTaskId').val();
+
+                console.log('Submitting edit form:', formData);
 
                 $.ajax({
                     url: url,
                     method: 'POST',
-                    data: formData + '&_method=' + method,
+                    data: formData + '&_method=PUT',
                     success: function(response) {
+                        console.log('Task updated successfully:', response);
+
+                        // Update the task card in the DOM without reloading
+                        updateTaskCardInDOM(taskId, response.task);
+
                         $('#editTaskModal').modal('hide');
-                        location.reload();
+                        alert('Task updated successfully!');
                     },
                     error: function(xhr) {
-                        var errors = xhr.responseJSON.errors;
-                        if (errors) {
-                            alert('Error: ' + Object.values(errors).join('\n'));
-                        } else {
-                            alert('Error updating task');
-                        }
+                        console.error('Error updating task:', xhr.responseJSON);
+                        alert('Error updating task: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                    }
+                });
+            });
+
+            // Function to update task card in DOM
+            function updateTaskCardInDOM(taskId, taskData) {
+                var taskCard = $('#task-' + taskId);
+                var categoryBadge = '';
+
+                if (taskData.category && taskData.category.id) {
+                    categoryBadge = `
+                        <span class="badge category-badge"
+                              style="background-color: ${taskData.category.color}20; color: ${taskData.category.color}; border: 1px solid ${taskData.category.color}30;"
+                              title="${taskData.category.name}">
+                            <i class="${taskData.category.icon} me-1"></i>
+                            ${taskData.category.name}
+                        </span>
+                    `;
+                } else {
+                    categoryBadge = `
+                        <span class="badge category-badge no-category"
+                              style="background-color: #95a5a620; color: #95a5a6; border: 1px solid #95a5a630;">
+                            <i class="fas fa-question me-1"></i>
+                            No Category
+                        </span>
+                    `;
+                }
+
+                // Update task title
+                taskCard.find('.task-title').text(taskData.title);
+
+                // Update description
+                var descriptionContainer = taskCard.find('.description-container');
+                if (taskData.description) {
+                    var readMoreBtn = '';
+                    if (taskData.description.length > 100) {
+                        readMoreBtn = `
+                            <button class="read-more-btn" data-task-id="${taskId}">
+                                <span class="read-more-text">Read more</span>
+                                <span class="read-less-text" style="display: none;">Read less</span>
+                            </button>
+                        `;
+                    }
+
+                    descriptionContainer.html(`
+                        <p class="text-muted small mb-2 task-description" id="description-${taskId}">
+                            ${taskData.description}
+                        </p>
+                        ${readMoreBtn}
+                    `);
+                } else {
+                    descriptionContainer.html('');
+                }
+
+                // Update category badge
+                taskCard.find('.task-meta').html(`
+                    ${categoryBadge}
+                    <small class="text-muted">
+                        <i class="far fa-clock me-1"></i>
+                        ${new Date(taskData.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </small>
+                `);
+
+                // Update data attributes if needed
+                taskCard.data('category-id', taskData.category_id || '');
+            }
+
+            // Submit Add Task Form
+            $('#addTaskForm').submit(function(e) {
+                e.preventDefault();
+
+                var form = $(this);
+                var formData = form.serialize();
+
+                console.log('Submitting add form:', formData);
+
+                $.ajax({
+                    url: '{{ route("tasks.store") }}',
+                    method: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        $('#addTaskModal').modal('hide');
+                        form[0].reset();
+                        $('.select2-modal').val(null).trigger('change');
+                        location.reload(); // Reload to show new task
+                    },
+                    error: function(xhr) {
+                        console.error('Error adding task:', xhr.responseJSON);
+                        alert('Error adding task: ' + (xhr.responseJSON?.message || 'Unknown error'));
                     }
                 });
             });
@@ -746,7 +819,6 @@
             $(document).on('click', '.delete-task', function() {
                 if (confirm('Are you sure you want to delete this task?')) {
                     var taskId = $(this).data('task-id');
-                    var columnId = $(this).closest('.column').data('column-id');
 
                     $.ajax({
                         url: '/tasks/' + taskId,
@@ -756,12 +828,7 @@
                             _method: 'DELETE'
                         },
                         success: function() {
-                            // Remove task from DOM
                             $('#task-' + taskId).remove();
-                            updateColumnTaskCount(columnId);
-                        },
-                        error: function() {
-                            alert('Error deleting task');
                         }
                     });
                 }
@@ -780,13 +847,6 @@
                         },
                         success: function() {
                             location.reload();
-                        },
-                        error: function(xhr) {
-                            if (xhr.status === 422) {
-                                alert('Error: ' + xhr.responseJSON.message);
-                            } else {
-                                alert('Error creating column');
-                            }
                         }
                     });
                 }
@@ -808,16 +868,7 @@
                             name: newName.trim()
                         },
                         success: function() {
-                            // Update column name in DOM
-                            $('.column-title[data-column-id="' + columnId + '"]').text(newName.trim());
-                            $('.edit-column[data-column-id="' + columnId + '"]').data('column-name', newName.trim());
-
-                            // Update select options
-                            $('#selectColumnId option[value="' + columnId + '"]').text(newName.trim());
-                            $('#editTaskColumnId option[value="' + columnId + '"]').text(newName.trim());
-                        },
-                        error: function() {
-                            alert('Error updating column');
+                            location.reload();
                         }
                     });
                 }
@@ -837,9 +888,6 @@
                         },
                         success: function() {
                             location.reload();
-                        },
-                        error: function() {
-                            alert('Error deleting column');
                         }
                     });
                 }
@@ -888,21 +936,13 @@
                     url: '{{ route("categories.store") }}',
                     method: 'POST',
                     data: $(this).serialize(),
-                    success: function() {
+                    success: function(response) {
                         $('#addCategoryModal').modal('hide');
-                        location.reload();
+                        location.reload(); // Reload to show new category in dropdown
                     },
                     error: function(xhr) {
-                        if (xhr.status === 422) {
-                            var errors = xhr.responseJSON.errors;
-                            var errorMessages = [];
-                            for (var field in errors) {
-                                errorMessages.push(errors[field].join(', '));
-                            }
-                            alert('Error: ' + errorMessages.join('\n'));
-                        } else {
-                            alert('Error creating category');
-                        }
+                        console.error('Error creating category:', xhr.responseJSON);
+                        alert('Error creating category: ' + (xhr.responseJSON?.message || 'Unknown error'));
                     }
                 });
             });
@@ -918,54 +958,6 @@
                 $('#selectedIcon').val('fas fa-folder');
                 updateCategoryPreview();
             });
-
-            // Submit Add Task Form
-            $('#addTaskForm').submit(function(e) {
-                e.preventDefault();
-
-                var form = $(this);
-                var url = form.attr('action');
-                var formData = form.serialize();
-
-                $.ajax({
-                    url: url,
-                    method: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        $('#addTaskModal').modal('hide');
-                        form[0].reset();
-                        // Reset Select2
-                        $('.select2-modal').val(null).trigger('change');
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        if (xhr.status === 422) {
-                            var errors = xhr.responseJSON.errors;
-                            var errorMessages = [];
-                            for (var field in errors) {
-                                errorMessages.push(errors[field].join(', '));
-                            }
-                            alert('Error: ' + errorMessages.join('\n'));
-                        } else {
-                            alert('Error creating task');
-                        }
-                    }
-                });
-            });
-
-            // Close Select2 dropdown when modal closes
-            $('.modal').on('hidden.bs.modal', function() {
-                $('.select2-modal').select2('close');
-            });
-
-            // Show success messages if any
-            @if(session('success'))
-                alert('{{ session('success') }}');
-            @endif
-
-            @if($errors->any())
-                alert('{{ $errors->first() }}');
-            @endif
         });
     </script>
 </body>

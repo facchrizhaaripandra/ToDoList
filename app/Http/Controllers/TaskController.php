@@ -11,14 +11,10 @@ class TaskController extends Controller
 {
     public function index()
     {
-        // Pastikan ada minimal satu kolom
-        if (Column::count() === 0) {
-            Column::create(['name' => 'To Do', 'order' => 1]);
-            Column::create(['name' => 'In Progress', 'order' => 2]);
-            Column::create(['name' => 'Done', 'order' => 3]);
-        }
+        $columns = Column::with(['tasks' => function($query) {
+            $query->with('category');
+        }])->orderBy('order')->get();
 
-        $columns = Column::with('tasks.category')->orderBy('order')->get();
         $categories = Category::all();
 
         return view('tasks.index', compact('columns', 'categories'));
@@ -30,25 +26,23 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category_id' => 'nullable|exists:categories,id',
-            'column_id' => 'nullable|exists:columns,id'
+            'column_id' => 'required|exists:columns,id'
         ]);
 
-        $data = [
+        Task::create([
             'title' => $request->title,
             'description' => $request->description,
-            'category_id' => $request->category_id
-        ];
-
-        // Jika column_id tidak ada, gunakan kolom pertama
-        if ($request->column_id) {
-            $data['column_id'] = $request->column_id;
-        } else {
-            $data['column_id'] = Column::first()->id;
-        }
-
-        Task::create($data);
+            'category_id' => $request->category_id ?: null,
+            'column_id' => $request->column_id
+        ]);
 
         return redirect()->route('tasks.index')->with('success', 'Task added successfully!');
+    }
+
+    public function show($id)
+    {
+        $task = Task::with('category')->findOrFail($id);
+        return response()->json($task);
     }
 
     public function update(Request $request, $id)
@@ -61,14 +55,34 @@ class TaskController extends Controller
         ]);
 
         $task = Task::findOrFail($id);
+
+        // Debug logging
+        \Log::info('Updating task', [
+            'task_id' => $id,
+            'category_id' => $request->category_id,
+            'data' => $request->all()
+        ]);
+
         $task->update([
             'title' => $request->title,
             'description' => $request->description,
-            'category_id' => $request->category_id,
+            'category_id' => $request->category_id ?: null,
             'column_id' => $request->column_id
         ]);
 
-        return redirect()->route('tasks.index')->with('success', 'Task updated successfully!');
+        // Refresh task with category
+        $task->load('category');
+
+        \Log::info('Task updated', [
+            'task' => $task->toArray(),
+            'category' => $task->category
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task updated successfully',
+            'task' => $task
+        ]);
     }
 
     public function destroy($id)
@@ -76,21 +90,14 @@ class TaskController extends Controller
         $task = Task::findOrFail($id);
         $task->delete();
 
-        return redirect()->route('tasks.index')->with('success', 'Task deleted successfully!');
+        return response()->json(['success' => true]);
     }
 
-    // Method untuk update kolom task (drag & drop)
     public function updateColumn(Request $request, $id)
     {
         $task = Task::findOrFail($id);
         $task->update(['column_id' => $request->column_id]);
 
         return response()->json(['success' => true]);
-    }
-
-    public function show($id)
-    {
-        $task = Task::with('category', 'column')->findOrFail($id);
-        return response()->json($task);
     }
 }
