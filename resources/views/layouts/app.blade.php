@@ -446,6 +446,135 @@
         .column.active-scroll .active-column-indicator {
             opacity: 1;
         }
+
+        /* ==================== DRAG & DROP STYLES ==================== */
+
+        /* Task card during drag */
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Ghost element shown during drag */
+        .drag-ghost {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            border: 2px solid #667eea;
+        }
+
+        /* Column when hovering during drag */
+        .column.drag-over {
+            background: #f0f4ff;
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.15);
+        }
+
+        /* Source column during drag */
+        .column.drag-source {
+            opacity: 0.8;
+        }
+
+        /* Task list drop zone */
+        .tasks-list.drag-over {
+            background: #f5f8ff;
+            border-radius: 8px;
+            min-height: 50px;
+        }
+
+        /* Visual feedback after task moved */
+        .task-card.task-moved {
+            animation: moveSuccess 0.6s ease-out;
+        }
+
+        @keyframes moveSuccess {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                background: #d4edda;
+                transform: scale(1.02);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Column drag handle hover state */
+        .column-header:hover {
+            cursor: grab;
+        }
+
+        .column-header:active {
+            cursor: grabbing;
+        }
+
+        /* Task drag handle styles */
+        .drag-handle {
+            display: inline-flex;
+            align-items: center;
+            cursor: grab;
+            color: #bdc3c7;
+            transition: all 0.2s ease;
+        }
+
+        .drag-handle:hover {
+            color: #667eea;
+        }
+
+        .task-card:active .drag-handle {
+            cursor: grabbing;
+            color: #667eea;
+        }
+
+        /* Smooth transitions during drag operations */
+        .task-card {
+            transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .column {
+            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Drag and drop hints */
+        .drag-hint {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            background: #ecf0f1;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+
+        .column.drag-over .drag-hint {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Disabled state during drag */
+        .kanban-board-container.is-dragging {
+            overflow: hidden;
+        }
+
+        /* Scrollbar styling during drag */
+        .kanban-board-container::-webkit-scrollbar-thumb.drag-active {
+            background: #667eea;
+        }
     </style>
 </head>
 <body>
