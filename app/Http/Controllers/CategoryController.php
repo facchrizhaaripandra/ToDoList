@@ -10,18 +10,32 @@ class CategoryController extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
-            'color' => 'required|string|max:7',
-            'icon' => 'required|string|max:50'
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:categories,name',
+                'color' => 'required|string|max:7',
+                'icon' => 'required|string|max:50'
+            ]);
 
-        $category = Category::create($request->all());
+            $category = Category::create($validated);
 
-        return response()->json([
-            'success' => true,
-            'category' => $category
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Category created successfully',
+                'category' => $category
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function update(Request $request, $id)

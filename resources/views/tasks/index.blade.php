@@ -188,12 +188,12 @@
             $('#openAddCategoryModal').click(function() {
                 closeAllDropdowns();
                 deactivateHorizontalScroll(); // Reset scroll mode when opening modal
-                
+
                 // Initialize form values
                 $('#selectedColor').val('#3498db');
                 $('#selectedIcon').val('fas fa-folder');
                 updateCategoryPreview();
-                
+
                 if (addCategoryModal) {
                     addCategoryModal.show();
                 } else {
@@ -991,15 +991,41 @@
             $('#addCategoryForm').off('submit').submit(function(e) {
                 e.preventDefault();
 
-                var formData = $(this).serialize();
-                console.log('Form data:', formData);
-                console.log('Color:', $('#selectedColor').val());
-                console.log('Icon:', $('#selectedIcon').val());
+                // Validate required fields
+                var name = $('[name="name"]', this).val().trim();
+                var color = $('#selectedColor').val();
+                var icon = $('#selectedIcon').val();
+
+                if (!name) {
+                    alert('Category name is required!');
+                    return false;
+                }
+
+                if (!color) {
+                    alert('Color is required!');
+                    return false;
+                }
+
+                if (!icon) {
+                    alert('Icon is required!');
+                    return false;
+                }
+
+                // Prepare form data
+                var formData = {
+                    _token: '{{ csrf_token() }}',
+                    name: name,
+                    color: color,
+                    icon: icon
+                };
+
+                console.log('Submitting category with data:', formData);
 
                 $.ajax({
                     url: '{{ route("categories.store") }}',
                     method: 'POST',
                     data: formData,
+                    dataType: 'json',
                     success: function(response) {
                         console.log('Category created:', response);
                         if (addCategoryModal) {
@@ -1011,20 +1037,29 @@
                         location.reload();
                     },
                     error: function(xhr) {
-                        console.log('Error response:', xhr);
+                        console.error('Error response:', xhr);
                         console.log('Status:', xhr.status);
-                        console.log('Response text:', xhr.responseText);
-                        
-                        var errors = xhr.responseJSON?.errors;
-                        if (errors) {
-                            var errorMsg = '';
-                            for (var field in errors) {
-                                errorMsg += errors[field].join('\n') + '\n';
+                        console.log('Response:', xhr.responseText);
+
+                        var errorMsg = 'Error creating category';
+
+                        try {
+                            var jsonResponse = JSON.parse(xhr.responseText);
+                            if (jsonResponse.errors) {
+                                errorMsg = 'Validation errors:\n';
+                                for (var field in jsonResponse.errors) {
+                                    errorMsg += '- ' + jsonResponse.errors[field].join('\n  ') + '\n';
+                                }
+                            } else if (jsonResponse.message) {
+                                errorMsg = jsonResponse.message;
                             }
-                            alert('Error: ' + errorMsg);
-                        } else {
-                            alert('Error creating category: ' + (xhr.responseJSON?.message || xhr.statusText || 'Unknown error'));
+                        } catch(e) {
+                            if (xhr.statusText) {
+                                errorMsg = 'Error: ' + xhr.statusText;
+                            }
                         }
+
+                        alert(errorMsg);
                     }
                 });
             });
