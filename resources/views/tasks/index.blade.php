@@ -22,14 +22,14 @@
     <!-- Add Task Modal -->
     <div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            @include('partials.task.add-task-modal')
+            @include('partials.task.add-task-modal', ['categories' => $categories, 'columns' => $columns])
         </div>
     </div>
 
     <!-- Edit Task Modal -->
     <div class="modal fade" id="editTaskModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            @include('partials.task.edit-task-modal')
+            @include('partials.task.edit-task-modal', ['categories' => $categories, 'columns' => $columns])
         </div>
     </div>
 
@@ -825,39 +825,96 @@
             }
 
             // Initialize Sortable for each column's task list
+            var sortableInstances = {};
             $('.column').each(function() {
                 var columnId = $(this).data('column-id');
                 var taskList = document.getElementById('tasks-list-' + columnId);
 
                 if (taskList) {
-                    Sortable.create(taskList, {
-                        group: 'tasks',
+                    console.log('Initializing Sortable for task list:', taskList.id);
+                    // Store Sortable instance so we can access/reinit if needed
+                    sortableInstances[columnId] = Sortable.create(taskList, {
+                        group: { name: 'tasks', put: true, pull: true },
+                        sort: true,
                         animation: 150,
-                        handle: '.drag-handle',
+                        ghostClass: 'sortable-ghost',
+                        dragClass: 'sortable-drag',
+                        // Allow drag from entire task-card (no handle restriction)
+                        // If you want to restrict to handle only, uncomment next line:
+                        // handle: '.drag-handle',
+                        draggable: '.task-card',
+                        filter: '.add-to-column',  // Don't drag the "Add Task" button
+                        preventOnFilter: false,
+                        onStart: function(evt) {
+                            console.log('Drag started on task:', evt.item.dataset.taskId);
+                            $(evt.item).addClass('dragging');
+                        },
                         onEnd: function(evt) {
-                            var taskId = evt.item.dataset.taskId;
-                            var newColumnId = $(evt.to).closest('.column').data('column-id');
+                            console.log('Drag ended. Item:', evt.item.dataset.taskId, 'From:', evt.from.id, 'To:', evt.to.id);
+                            $(evt.item).removeClass('dragging');
 
-                            if (!newColumnId) return;
+                            var taskId = evt.item.dataset.taskId;
+                            var sourceColumnId = $(evt.from).closest('.column').data('column-id');
+                            var targetColumnId = $(evt.to).closest('.column').data('column-id');
+
+                            // If task didn't actually move to a different position/column, skip AJAX
+                            if (!targetColumnId || (targetColumnId === sourceColumnId && evt.from === evt.to)) {
+                                return;
+                            }
+
+                            console.log('Updating task', taskId, 'to column', targetColumnId);
 
                             $.ajax({
                                 url: '/tasks/' + taskId + '/update-column',
                                 method: 'POST',
                                 data: {
                                     _token: '{{ csrf_token() }}',
-                                    column_id: newColumnId
+                                    column_id: targetColumnId
                                 },
                                 success: function(response) {
-                                    // Auto-sort tasks dalam kolom target setelah task dipindahkan
-                                    const column = document.querySelector('[data-column-id="' + newColumnId + '"]');
-                                    if (column) {
-                                        const taskListContainer = column.querySelector('.tasks-list');
-                                        if (taskListContainer) {
+                                    console.log('Task moved successfully');
+
+                                    // Remove empty-state from target column if it exists
+                                    const targetColumn = document.querySelector('[data-column-id="' + targetColumnId + '"]');
+                                    if (targetColumn) {
+                                        const targetTaskList = targetColumn.querySelector('.tasks-list');
+                                        if (targetTaskList) {
+                                            // Remove empty-state if task was moved to this column
+                                            const emptyState = targetTaskList.querySelector('.empty-state');
+                                            if (emptyState) {
+                                                emptyState.remove();
+                                                console.log('Removed empty-state from target column');
+                                            }
+
+                                            // Auto-sort tasks dalam kolom target setelah task dipindahkan
                                             setTimeout(() => {
-                                                sortTasksByDueDate(taskListContainer);
+                                                sortTasksByDueDate(targetTaskList);
                                             }, 100);
                                         }
                                     }
+
+                                    // Check if source column is now empty and add empty-state if needed
+                                    if (sourceColumnId) {
+                                        const sourceColumn = document.querySelector('[data-column-id="' + sourceColumnId + '"]');
+                                        if (sourceColumn) {
+                                            const sourceTaskList = sourceColumn.querySelector('.tasks-list');
+                                            if (sourceTaskList) {
+                                                const visibleTasks = sourceTaskList.querySelectorAll('.task-card:not(.sortable-ghost)').length;
+                                                if (visibleTasks === 0) {
+                                                    // Add empty-state to source column
+                                                    const emptyStateHtml = '<div class="empty-state"><i class="fas fa-tasks text-muted"></i><p class="mb-0">No tasks yet</p></div>';
+                                                    sourceTaskList.insertAdjacentHTML('beforeend', emptyStateHtml);
+                                                    console.log('Added empty-state to source column');
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    console.error('Error moving task:', error, xhr);
+                                    alert('Error moving task. Please try again.');
+                                    // Optionally reload or revert the UI
+                                    location.reload();
                                 }
                             });
                         }
@@ -1028,13 +1085,47 @@
                     dataType: 'json',
                     success: function(response) {
                         console.log('Category created:', response);
+
+                        // Add new category option to Select2 dropdowns WITHOUT reloading page
+                        var newOption = $('<option></option>')
+                            .attr('value', response.category.id)
+                            .data('color', response.category.color)
+                            .data('icon', response.category.icon)
+                            .html('<i class="' + response.category.icon + ' me-2" style="color: ' + response.category.color + '"></i>' + response.category.name);
+
+                        // Add to Add Task modal
+                        $('#categorySelect').append(newOption.clone());
+                        if (addTaskSelect2) {
+                            addTaskSelect2.select2('destroy');
+                        }
+                        addTaskSelect2 = $('#categorySelect').select2({
+                            dropdownParent: $('#addTaskModal'),
+                            width: '100%',
+                            templateResult: formatCategory,
+                            templateSelection: formatCategory,
+                            escapeMarkup: function(m) { return m; }
+                        });
+
+                        // Add to Edit Task modal
+                        $('#editCategoryId').append(newOption.clone());
+                        if (editTaskSelect2) {
+                            editTaskSelect2.select2('destroy');
+                        }
+                        editTaskSelect2 = $('#editCategoryId').select2({
+                            dropdownParent: $('#editTaskModal'),
+                            width: '100%',
+                            templateResult: formatCategory,
+                            templateSelection: formatCategory,
+                            escapeMarkup: function(m) { return m; }
+                        });
+
+                        // Close modal
                         if (addCategoryModal) {
                             addCategoryModal.hide();
                         } else {
                             $('#addCategoryModal').modal('hide');
                         }
                         alert('Category created successfully!');
-                        location.reload();
                     },
                     error: function(xhr) {
                         console.error('Error response:', xhr);

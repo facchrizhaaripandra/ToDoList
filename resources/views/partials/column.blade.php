@@ -44,7 +44,8 @@
                                     if ($task->due_date) {
                                         $dueDate = \Carbon\Carbon::parse($task->due_date);
                                         $today = \Carbon\Carbon::now();
-                                        $daysUntilDue = $today->diffInDays($dueDate, false); // false = not absolute
+                                        $diff = $today->diffInDays($dueDate, false); // false = not absolute
+                                        $daysUntilDue = $diff < 0 ? (int) floor($diff) : (int) ceil($diff);
 
                                         if ($daysUntilDue < 0) {
                                             $urgencyLevel = 'overdue';

@@ -47,3 +47,33 @@
 .column-title {
     cursor: pointer;
 }
+
+/* Drag handle cursor to hint draggable area */
+.drag-handle {
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Sortable task card styling */
+.task-card {
+    cursor: move;
+    user-select: none;
+}
+
+.task-card.sortable-drag {
+    opacity: 0.5;
+    background-color: #e3f2fd;
+}
+
+.task-card.sortable-ghost {
+    opacity: 0.3;
+    background-color: #90caf9;
+}
+
+.task-card.dragging {
+    z-index: 1000;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}

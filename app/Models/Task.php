@@ -41,7 +41,9 @@ class Task extends Model
             return 'none';
         }
 
-        $daysUntilDue = Carbon::now()->diffInDays($this->due_date, false);
+        $diff = Carbon::now()->diffInDays($this->due_date, false);
+        // Ensure we return an integer number of days (avoid floats)
+        $daysUntilDue = $diff < 0 ? (int) floor($diff) : (int) ceil($diff);
 
         if ($daysUntilDue < 0) {
             return 'overdue'; // Sudah lewat deadline
@@ -63,7 +65,8 @@ class Task extends Model
             return null;
         }
 
-        return Carbon::now()->diffInDays($this->due_date, false);
+        $diff = Carbon::now()->diffInDays($this->due_date, false);
+        return $diff < 0 ? (int) floor($diff) : (int) ceil($diff);
     }
 
     // Scope untuk tasks yang urgent (due dalam 2 minggu)

@@ -43,7 +43,12 @@
                                 <select name="category_id" class="form-control select2-category-edit" id="editCategoryId">
                                     <option value="">No Category</option>
                                     @foreach($categories as $category)
-                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    <option value="{{ $category->id }}"
+                                            data-color="{{ $category->color }}"
+                                            data-icon="{{ $category->icon }}">
+                                        <i class="{{ $category->icon }} me-2" style="color: {{ $category->color }}"></i>
+                                        {{ $category->name }}
+                                    </option>
                                     @endforeach
                                 </select>
                             </div>
