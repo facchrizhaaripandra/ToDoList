@@ -9,8 +9,12 @@ class AddDueDateToTasks extends Migration
     public function up()
     {
         Schema::table('tasks', function (Blueprint $table) {
-            $table->date('due_date')->nullable()->after('description');
-            $table->boolean('is_urgent')->default(false)->after('due_date');
+            if (!Schema::hasColumn('tasks', 'due_date')) {
+                $table->date('due_date')->nullable()->after('description');
+            }
+            if (!Schema::hasColumn('tasks', 'is_urgent')) {
+                $table->boolean('is_urgent')->default(false)->after('due_date');
+            }
         });
     }
 
