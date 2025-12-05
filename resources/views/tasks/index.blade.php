@@ -188,6 +188,12 @@
             $('#openAddCategoryModal').click(function() {
                 closeAllDropdowns();
                 deactivateHorizontalScroll(); // Reset scroll mode when opening modal
+                
+                // Initialize form values
+                $('#selectedColor').val('#3498db');
+                $('#selectedIcon').val('fas fa-folder');
+                updateCategoryPreview();
+                
                 if (addCategoryModal) {
                     addCategoryModal.show();
                 } else {
@@ -985,19 +991,30 @@
             $('#addCategoryForm').off('submit').submit(function(e) {
                 e.preventDefault();
 
+                var formData = $(this).serialize();
+                console.log('Form data:', formData);
+                console.log('Color:', $('#selectedColor').val());
+                console.log('Icon:', $('#selectedIcon').val());
+
                 $.ajax({
                     url: '{{ route("categories.store") }}',
                     method: 'POST',
-                    data: $(this).serialize(),
-                    success: function() {
+                    data: formData,
+                    success: function(response) {
+                        console.log('Category created:', response);
                         if (addCategoryModal) {
                             addCategoryModal.hide();
                         } else {
                             $('#addCategoryModal').modal('hide');
                         }
+                        alert('Category created successfully!');
                         location.reload();
                     },
                     error: function(xhr) {
+                        console.log('Error response:', xhr);
+                        console.log('Status:', xhr.status);
+                        console.log('Response text:', xhr.responseText);
+                        
                         var errors = xhr.responseJSON?.errors;
                         if (errors) {
                             var errorMsg = '';
@@ -1006,7 +1023,7 @@
                             }
                             alert('Error: ' + errorMsg);
                         } else {
-                            alert('Error creating category');
+                            alert('Error creating category: ' + (xhr.responseJSON?.message || xhr.statusText || 'Unknown error'));
                         }
                     }
                 });
