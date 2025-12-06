@@ -269,3 +269,15 @@ php artisan migrate:fresh
 npm run dev
 php artisan cache:clear
 ```
+
+### Hasil
+#### Halaman Utama
+<img width="1894" height="919" alt="image" src="https://github.com/user-attachments/assets/e1caf31f-6003-4fdc-9351-052cdf98e72b" />
+
+#### Halaman Tambah Task (Tugas)
+<img width="1001" height="723" alt="image" src="https://github.com/user-attachments/assets/17665ca4-3e52-4d30-a0b6-2b4d323e18e0" />
+
+#### Halaman Tambah Kategori
+<img width="636" height="705" alt="image" src="https://github.com/user-attachments/assets/f3b5c84f-96e3-4d58-8ad8-98200d5e18f0" />
+
+
