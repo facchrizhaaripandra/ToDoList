@@ -86,7 +86,8 @@
                                      id="task-{{ $task->id }}"
                                      data-category-id="{{ $task->category_id }}"
                                      data-due-date="{{ $task->due_date }}"
-                                     data-urgency="{{ $urgencyLevel }}">
+                                     data-urgency="{{ $urgencyLevel }}"
+                                     style="cursor: pointer;">
                                     <div class="task-header">
                                         <div class="task-header-content">
                                             <div class="d-flex align-items-start">

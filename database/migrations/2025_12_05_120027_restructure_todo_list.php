@@ -8,14 +8,6 @@ class RestructureTodoList extends Migration
 {
     public function up()
     {
-        // Cek dan hapus tabel subtasks jika ada
-        if (Schema::hasTable('subtasks')) {
-            Schema::table('tasks', function (Blueprint $table) {
-                // Hapus foreign key jika ada
-                $table->dropForeignIfExists(['subtask_id']);
-            });
-            Schema::dropIfExists('subtasks');
-        }
 
         // Hapus kolom subtask_id jika ada
         if (Schema::hasColumn('tasks', 'subtask_id')) {

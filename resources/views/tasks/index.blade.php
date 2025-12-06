@@ -33,6 +33,13 @@
         </div>
     </div>
 
+    <!-- Task Details Modal -->
+    <div class="modal fade" id="taskDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            @include('partials.task.task-details-modal')
+        </div>
+    </div>
+
     <!-- Add Category Modal -->
     <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -68,12 +75,15 @@
             var addTaskModal = null;
             var editTaskModal = null;
             var addCategoryModal = null;
+            var taskDetailsModal = null;
 
             // Initialize modals
             function initializeModals() {
                 addTaskModal = new bootstrap.Modal(document.getElementById('addTaskModal'));
                 editTaskModal = new bootstrap.Modal(document.getElementById('editTaskModal'));
                 addCategoryModal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+                taskDetailsModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
+                console.log('Modals initialized, taskDetailsModal:', taskDetailsModal);
             }
 
             initializeModals();
@@ -216,6 +226,229 @@
                 var taskId = $(this).data('task-id');
                 loadTaskDataForEdit(taskId);
             });
+
+            // Edit task from details modal
+            $(document).off('click', '#editTaskFromDetailsBtn').on('click', '#editTaskFromDetailsBtn', function() {
+                var taskId = $(this).data('task-id');
+                if (taskDetailsModal) {
+                    taskDetailsModal.hide();
+                } else {
+                    $('#taskDetailsModal').modal('hide');
+                }
+                setTimeout(function() {
+                    loadTaskDataForEdit(taskId);
+                }, 300);
+            });
+
+            // Delete task from details modal
+            $(document).off('click', '#deleteTaskFromDetailsBtn').on('click', '#deleteTaskFromDetailsBtn', function() {
+                if (confirm('Are you sure you want to delete this task?')) {
+                    var taskId = $(this).data('task-id');
+
+                    $.ajax({
+                        url: '/tasks/' + taskId,
+                        method: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            _method: 'DELETE'
+                        },
+                        success: function() {
+                            if (taskDetailsModal) {
+                                taskDetailsModal.hide();
+                            } else {
+                                $('#taskDetailsModal').modal('hide');
+                            }
+                            $('#task-' + taskId).remove();
+                            updateColumnTaskCounts();
+                        },
+                        error: function(xhr) {
+                            alert('Error deleting task. Please try again.');
+                        }
+                    });
+                }
+            });
+
+            // Click task card to show details
+            $(document).on('click', '.task-card', function(e) {
+                console.log('Task card clicked - raw event');
+                console.log('Target element:', e.target);
+                console.log('Current element:', this);
+                console.log('Task ID:', $(this).data('task-id'));
+
+                // Prevent click if clicking on action buttons or drag handle
+                if ($(e.target).closest('.task-actions, .drag-handle').length) {
+                    console.log('Click prevented - on action button or drag handle');
+                    return;
+                }
+
+                var taskId = $(this).data('task-id');
+                console.log('Loading details for task:', taskId);
+
+                // Test modal first
+                console.log('Testing modal show...');
+                if (taskDetailsModal) {
+                    console.log('Using Bootstrap modal object');
+                    taskDetailsModal.show();
+                } else {
+                    console.log('Using jQuery modal method');
+                    $('#taskDetailsModal').modal('show');
+                }
+
+                // Then load details
+                loadTaskDetails(taskId);
+            });
+
+            // Function to load task details into modal
+            function loadTaskDetails(taskId) {
+                console.log('loadTaskDetails called with taskId:', taskId);
+
+                $('#taskDetailsContent').html(`
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                `);
+
+                // Set task ID for edit and delete buttons
+                $('#editTaskFromDetailsBtn').data('task-id', taskId).show();
+                $('#deleteTaskFromDetailsBtn').data('task-id', taskId).show();
+
+                console.log('Making AJAX request to /tasks/' + taskId);
+
+                $.ajax({
+                    url: '/tasks/' + taskId,
+                    method: 'GET',
+                    success: function(response) {
+                        console.log('Task details loaded successfully:', response);
+
+                        // Calculate urgency level locally
+                        var urgencyLevel = calculateUrgencyLevel(response.due_date);
+                        var urgencyClass = 'urgency-' + urgencyLevel;
+
+                        // Format due date
+                        var dueDateHtml = '';
+                        if (response.due_date) {
+                            var dueDate = new Date(response.due_date);
+                            var today = new Date();
+                            var daysDiff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+                            var dueText = '';
+                            if (daysDiff < 0) {
+                                dueText = '(' + Math.abs(daysDiff) + ' days overdue)';
+                            } else if (daysDiff === 0) {
+                                dueText = '(Today)';
+                            } else if (daysDiff === 1) {
+                                dueText = '(Tomorrow)';
+                            } else {
+                                dueText = '(in ' + daysDiff + ' days)';
+                            }
+
+                            var dueDateClass = '';
+                            if (urgencyLevel === 'overdue') {
+                                dueDateClass = 'due-date-overdue';
+                            } else if (urgencyLevel === 'high') {
+                                dueDateClass = 'due-date-urgent';
+                            } else if (urgencyLevel === 'medium') {
+                                dueDateClass = 'due-date-warning';
+                            } else if (urgencyLevel === 'low') {
+                                dueDateClass = 'due-date-upcoming';
+                            } else {
+                                dueDateClass = 'due-date-normal';
+                            }
+
+                            var formattedDate = dueDate.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                            });
+
+                            dueDateHtml = `
+                                <span class="badge due-date-badge ${dueDateClass}" title="Due date">
+                                    <i class="far fa-calendar-alt me-1"></i>
+                                    ${formattedDate}
+                                    <span class="ms-1">${dueText}</span>
+                                </span>
+                            `;
+                        }
+
+                        // Format category badge
+                        var categoryBadge = '';
+                        if (response.category && response.category.id) {
+                            categoryBadge = `
+                                <span class="badge category-badge"
+                                      style="background-color: ${response.category.color}20; color: ${response.category.color}; border: 1px solid ${response.category.color}30;"
+                                      title="${response.category.name}">
+                                    <i class="${response.category.icon} me-1"></i>
+                                    ${response.category.name}
+                                </span>
+                            `;
+                        } else {
+                            categoryBadge = `
+                                <span class="badge category-badge no-category"
+                                      style="background-color: #95a5a620; color: #95a5a6; border: 1px solid #95a5a630;">
+                                    <i class="fas fa-question me-1"></i>
+                                    No Category
+                                </span>
+                            `;
+                        }
+
+                        var detailsHtml = `
+                            <div class="task-details">
+                                <div class="mb-3">
+                                    <h5 class="task-title">${response.title || 'No Title'}</h5>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        ${categoryBadge}
+                                        ${dueDateHtml}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6>Description:</h6>
+                                    <div class="task-description-content">
+                                        ${response.description ? response.description.replace(/\n/g, '<br>') : '<em>No description provided</em>'}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-1"></i>
+                                        Created: ${new Date(response.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        ${response.updated_at !== response.created_at ? '<br>Last updated: ' + new Date(response.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                                    </small>
+                                </div>
+                            </div>
+                        `;
+
+                        $('#taskDetailsContent').html(detailsHtml);
+
+                        // Show modal
+                        console.log('Attempting to show modal...');
+                        if (taskDetailsModal) {
+                            console.log('Using Bootstrap modal object');
+                            taskDetailsModal.show();
+                        } else {
+                            console.log('Using jQuery modal method');
+                            $('#taskDetailsModal').modal('show');
+                        }
+                        console.log('Modal show command executed');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading task details:', error);
+                        console.error('XHR status:', xhr.status);
+                        console.error('XHR response:', xhr.responseText);
+                        $('#taskDetailsContent').html(`
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Error loading task details. Please try again.
+                            </div>
+                        `);
+                    }
+                });
+            }
 
             function loadTaskDataForEdit(taskId) {
                 $('#currentTaskId').val(taskId);
