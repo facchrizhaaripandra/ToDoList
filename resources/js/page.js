@@ -559,9 +559,6 @@ $(document).ready(function () {
     // Initialize components for Add Task modal
     function initializeAddTaskComponents() {
         // Initialize Select2 for Add Task
-        if ($("#categorySelect").hasClass("select2-hidden-accessible")) {
-            $("#categorySelect").select2("destroy");
-        }
 
         addTaskSelect2 = $("#categorySelect").select2({
             dropdownParent: $("#addTaskModal"),
@@ -762,9 +759,7 @@ $(document).ready(function () {
                     if (column) {
                         const taskList = column.querySelector(".tasks-list");
                         if (taskList) {
-                            setTimeout(() => {
-                                sortTasksByDueDate(taskList);
-                            }, 100);
+                            sortTasksByDueDate(taskList);
                         }
                     }
                     console.log("Task added successfully!");
@@ -936,8 +931,16 @@ $(document).ready(function () {
                  data-urgency="${urgencyLevel}"
                  data-category-id="${taskData.category_id || ""}">
                 <div class="task-header">
+                    <div class="task-header-content">
+                        <div class="d-flex align-items-start">
+                            <span class="drag-handle me-2 mt-1">
+                                <i class="fas fa-grip-vertical"></i>
+                            </span>
+                            <h6 class="mb-0 task-title">${taskData.title}</h6>
+                        </div>
+                    </div>
                     <div class="task-actions">
-                        <button class="btn btn-sm btn-outline-secondary edit-task-btn"
+                        <button class="btn btn-sm btn-outline-primary edit-task-btn"
                                 data-task-id="${taskData.id}"
                                 title="Edit Task">
                             <i class="fas fa-edit"></i>
@@ -948,36 +951,32 @@ $(document).ready(function () {
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
-                    <div class="drag-handle">
-                        <i class="fas fa-grip-vertical"></i>
-                    </div>
                 </div>
-                <div class="task-content">
-                    <h6 class="task-title">${taskData.title}</h6>
-                    <div class="description-container">
-                        ${
-                            taskData.description
-                                ? `
-                            <p class="text-muted small mb-2 task-description" id="description-${taskData.id}">
-                                ${taskData.description}
-                            </p>
-                        `
-                                : ""
-                        }
+
+                <div class="description-container">
+                    ${
+                        taskData.description
+                            ? `
+                        <p class="text-muted small mb-2 task-description" id="description-${taskData.id}">
+                            ${taskData.description}
+                        </p>
+                    `
+                            : ""
+                    }
+                </div>
+
+                <div class="task-meta">
+                    <div class="d-flex flex-wrap gap-2">
+                        ${categoryBadge}
+                        ${dueDateBadge}
                     </div>
-                    <div class="task-meta">
-                        <div class="d-flex flex-wrap gap-2">
-                            ${categoryBadge}
-                            ${dueDateBadge}
-                        </div>
-                        <small class="text-muted">
-                            <i class="far fa-clock me-1"></i>
-                            ${new Date(taskData.created_at).toLocaleDateString(
-                                "en-US",
-                                { month: "short", day: "numeric" }
-                            )}
-                        </small>
-                    </div>
+                    <small class="text-muted">
+                        <i class="far fa-clock me-1"></i>
+                        ${new Date(taskData.created_at).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric" }
+                        )}
+                    </small>
                 </div>
             </div>
         `;
