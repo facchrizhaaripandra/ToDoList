@@ -1427,8 +1427,16 @@ $(document).ready(function () {
                         error: function (xhr, status, error) {
                             console.error("Error moving task:", error, xhr);
                             alert("Error moving task. Please try again.");
-                            // Optionally reload or revert the UI
-                            location.reload();
+                            // Revert the task to its original position
+                            if (evt.from !== evt.to) {
+                                // Move the task back to its original position
+                                evt.from.insertBefore(
+                                    evt.item,
+                                    evt.oldIndex !== undefined
+                                        ? evt.from.children[evt.oldIndex]
+                                        : null
+                                );
+                            }
                         },
                     });
                 },
@@ -1642,49 +1650,32 @@ $(document).ready(function () {
                         $("#addCategoryModal").modal("hide");
                     }
 
-                    // Add new category option to Select2 dropdowns WITHOUT reloading page
-                    var newOption = $("<option></option>")
-                        .attr("value", response.category.id)
-                        .data("color", response.category.color)
-                        .data("icon", response.category.icon)
-                        .html(
-                            '<i class="' +
-                                response.category.icon +
-                                ' me-2" style="color: ' +
-                                response.category.color +
-                                '"></i>' +
-                                response.category.name
-                        );
+                    // Add new category option to both select elements
+                    var newOptionHtml =
+                        '<option value="' +
+                        response.category.id +
+                        '" ' +
+                        'data-color="' +
+                        response.category.color +
+                        '" ' +
+                        'data-icon="' +
+                        response.category.icon +
+                        '">' +
+                        '<i class="' +
+                        response.category.icon +
+                        ' me-2" style="color: ' +
+                        response.category.color +
+                        '"></i>' +
+                        response.category.name +
+                        "</option>";
 
-                    // Add to Add Task modal
-                    $("#categorySelect").append(newOption.clone());
-                    if (addTaskSelect2) {
-                        addTaskSelect2.select2("destroy");
-                    }
-                    addTaskSelect2 = $("#categorySelect").select2({
-                        dropdownParent: $("#addTaskModal"),
-                        width: "100%",
-                        templateResult: formatCategory,
-                        templateSelection: formatCategory,
-                        escapeMarkup: function (m) {
-                            return m;
-                        },
-                    });
+                    // Add to Add Task modal select element
+                    $("#categorySelect").append(newOptionHtml);
 
-                    // Add to Edit Task modal
-                    $("#editCategoryId").append(newOption.clone());
-                    if (editTaskSelect2) {
-                        editTaskSelect2.select2("destroy");
-                    }
-                    editTaskSelect2 = $("#editCategoryId").select2({
-                        dropdownParent: $("#editTaskModal"),
-                        width: "100%",
-                        templateResult: formatCategory,
-                        templateSelection: formatCategory,
-                        escapeMarkup: function (m) {
-                            return m;
-                        },
-                    });
+                    // Add to Edit Task modal select element
+                    $("#editCategoryId").append(newOptionHtml);
+
+                    console.log("New category option added to select elements");
                 },
                 error: function (xhr) {
                     console.error("Error response:", xhr);
