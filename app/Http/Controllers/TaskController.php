@@ -30,7 +30,7 @@ class TaskController extends Controller
             'column_id' => 'required|exists:columns,id'
         ]);
 
-        Task::create([
+        $task = Task::create([
             'title' => $request->title,
             'description' => $request->description,
             'due_date' => $request->due_date,
@@ -38,7 +38,13 @@ class TaskController extends Controller
             'column_id' => $request->column_id
         ]);
 
-        return redirect()->route('tasks.index')->with('success', 'Task added successfully!');
+        $task->load('category');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task added successfully!',
+            'task' => $task
+        ]);
     }
 
     public function show($id)
