@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
+    // function untuk membuat category
     public function store(Request $request)
     {
         try {
@@ -37,6 +38,7 @@ class CategoryController extends Controller
         }
     }
 
+    // Function untuk update category yg ditambahkan
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -51,6 +53,7 @@ class CategoryController extends Controller
         return response()->json(['success' => true]);
     }
 
+    // Function untuk update category yg dihapus
     public function destroy($id)
     {
         $category = Category::findOrFail($id);
