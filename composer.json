@@ -1,4 +1,11 @@
 {
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
     "require": {
         "monolog/monolog": "^3.0"
     },
