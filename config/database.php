@@ -16,7 +16,13 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', env('APP_ENV') === 'production' ? 'mysql' : 'sqlite'),
+    'default' => env('DB_CONNECTION') ?? (function() {
+        // Railway: ketika .env tidak ada, prioritaskan MySQL jika DATABASE_URL ada
+        if (env('DATABASE_URL')) {
+            return 'mysql';
+        }
+        return env('APP_ENV') === 'production' ? 'mysql' : 'sqlite';
+    })(),
 
     /*
     |--------------------------------------------------------------------------
