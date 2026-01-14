@@ -1,6 +1,10 @@
 #!/bin/bash
 
 echo "=== Railway Deployment Debug ==="
+
+# Copy Railway .env
+cp .env.railway .env
+
 echo "Environment Check:"
 echo "APP_ENV: $APP_ENV"
 echo "APP_DEBUG: $APP_DEBUG"
