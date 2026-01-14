@@ -33,4 +33,9 @@ echo "Running migrations..."
 php artisan storage:link
 php artisan migrate --force
 
+echo "Caching config for production..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
 echo "Migrations complete!"
