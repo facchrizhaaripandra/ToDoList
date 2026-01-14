@@ -19,6 +19,9 @@ php artisan config:clear
 php artisan route:clear 
 php artisan view:clear
 
+echo "Installing npm dependencies..."
+npm install
+
 echo "Building Vite assets..."
 npm run build
 
