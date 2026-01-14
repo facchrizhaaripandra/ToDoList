@@ -18,6 +18,11 @@ echo "DATABASE_URL is set, proceeding with migrations..."
 php artisan config:clear
 php artisan route:clear 
 php artisan view:clear
+
+echo "Building Vite assets..."
+npm run build
+
+echo "Running migrations..."
 php artisan storage:link
 php artisan migrate --force
 
