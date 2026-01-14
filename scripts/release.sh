@@ -29,6 +29,19 @@ npm install
 echo "Building Vite assets..."
 npm run build
 
+if [ ! -d "public/build" ]; then
+    echo "ERROR: public/build directory not created!"
+    exit 1
+fi
+
+if [ ! -f "public/build/manifest.json" ]; then
+    echo "ERROR: manifest.json not found!"
+    exit 1
+fi
+
+echo "Assets built successfully. Files:"
+ls -la public/build/
+
 echo "Running migrations..."
 php artisan storage:link
 php artisan migrate --force
